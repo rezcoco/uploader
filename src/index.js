@@ -130,7 +130,7 @@ aria2.on('onDownloadComplete', async ([data]) => {
         exc.stderr.on('data', (data) => {
           console.error(data);
         });
-        exc.on('close', (code) => {
+        exc.on('close', async (code) => {
           console.log('Closed: ', code)
           dl.status = downloadStatus['STATUS_RENAMING']
           message.sendStatusMessage()
