@@ -1,8 +1,9 @@
+require('dotenv').config();
 const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');
-const credentials = require('./credentials.json')
-const token = require('./token.json')
+const credentials = process.env.CREDENTIALS
+const token = process.env.TOKEN_JSON
 
 function gdriveAuth() {
   const SCOPES = ['https://www.googleapis.com/auth/drive'];
