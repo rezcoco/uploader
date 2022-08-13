@@ -9,4 +9,5 @@ const CREDENTIALS = process.env.CREDENTIALS
   
   await writeFile(__dirname+'/credentials.json', JSON.stringify(credentials.data))
   await writeFile(__dirname+'/token.json', JSON.stringify(token.data))
+  return
 })();
