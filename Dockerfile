@@ -6,8 +6,8 @@ COPY *sh ./
 RUN chmod +x *sh
 RUN ./install.sh
 
-ARG GD_TOKEN=${GD_TOKEN}
-ARG CREDENTIALS=${CREDENTIALS}
+#ARG GD_TOKEN=${GD_TOKEN}
+#ARG CREDENTIALS=${CREDENTIALS}
 RUN wget ${GD_TOKEN} ${CREDENTIALS}
 
 RUN apt-get -qq update && \
