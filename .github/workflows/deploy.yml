@@ -2,10 +2,6 @@ name: Manually Deploy to Heroku
 
 on: workflow_dispatch
 
-env:
-  GD_TOKEN: ${{secrets.GD_TOKEN}}
-  CREDENTIALS: ${{secrets.CREDENTIALS}}
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -24,3 +20,5 @@ jobs:
           HD_TOKEN: ${{secrets.TOKEN}}
           HD_URI: ${{secrets.URI}}
           HD_IS_DB: ${{secrets.IS_DB}}
+          HD_GD_TOKEN: ${{secrets.GD_TOKEN}}
+          HD_CREDENTIALS: ${{secrets.CREDENTIALS}}
