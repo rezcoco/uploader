@@ -2,13 +2,9 @@ FROM node:latest
 
 WORKDIR /usr/src/app
 RUN chmod 777 /usr/src/app
-COPY *sh ./
+COPY . ./
 RUN chmod +x *sh
 RUN ./install.sh
-
-#ARG GD_TOKEN=${GD_TOKEN}
-#ARG CREDENTIALS=${CREDENTIALS}
-RUN wget $GD_TOKEN $CREDENTIALS
 
 RUN apt-get -qq update && \
     apt-get -qq -y install aria2 locales
@@ -17,8 +13,6 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en 
 ENV LC_ALL en_US.UTF-8
  
-COPY package.json .
 RUN npm install
-COPY . .
 
-CMD [ "npm", "start" ]
+CMD [ "bash", "start.sh" ]
