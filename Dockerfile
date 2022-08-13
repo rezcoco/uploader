@@ -5,8 +5,10 @@ RUN chmod 777 /usr/src/app
 COPY *sh ./
 RUN chmod +x *sh
 RUN ./install.sh
-RUN wget ${GD_TOKEN} ${CREDENTIALS}
 
+ARG GD_TOKEN=${GD_TOKEN}
+ARG CREDENTIALS=${CREDENTIALS}
+RUN wget ${GD_TOKEN} ${CREDENTIALS}
 
 RUN apt-get -qq update && \
     apt-get -qq -y install aria2 locales
