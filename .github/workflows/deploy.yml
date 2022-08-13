@@ -16,7 +16,12 @@ jobs:
           docker_heroku_process_type: web
           stack: "container"
           region: "eu"
+          docker_build_args: |
+            GD_TOKEN
+            CREDENTIALS
         env:
+          GD_TOKEN: ${{secrets.GD_TOKEN}}
+          CREDENTIALS: ${{secrets.CREDENTIALS}}
           HD_TOKEN: ${{secrets.TOKEN}}
           HD_URI: ${{secrets.URI}}
           HD_IS_DB: ${{secrets.IS_DB}}
