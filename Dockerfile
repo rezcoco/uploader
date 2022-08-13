@@ -13,9 +13,8 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en 
 ENV LC_ALL en_US.UTF-8
  
-COPY package.json setup.js ./
+COPY package.json .
 RUN npm install
-RUN node setup
 COPY . .
 
 CMD [ "npm", "start" ]
