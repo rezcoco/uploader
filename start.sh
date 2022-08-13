@@ -1,0 +1,1 @@
+node setup && npm start
