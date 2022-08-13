@@ -8,7 +8,7 @@ RUN ./install.sh
 
 #ARG GD_TOKEN=${GD_TOKEN}
 #ARG CREDENTIALS=${CREDENTIALS}
-RUN wget ${GD_TOKEN} ${CREDENTIALS}
+RUN wget $GD_TOKEN $CREDENTIALS
 
 RUN apt-get -qq update && \
     apt-get -qq -y install aria2 locales
