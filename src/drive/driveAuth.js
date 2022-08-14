@@ -8,8 +8,8 @@ async function gdriveAuth() {
   const SCOPES = ['https://www.googleapis.com/auth/drive'];
   const t = await axios.get('GD_TOKEN');
   const c = await axios.get('CREDENTIALS')
-  const credentials = JSON.stringify(c.data)
-  const token = JSON.stringify(t.data)
+  const credentials = c.data
+  const token = t.data
   
   const { client_secret, client_id, redirect_uris } = credentials.installed;
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
