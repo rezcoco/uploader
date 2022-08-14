@@ -6,8 +6,8 @@ const CREDENTIALS = process.env.CREDENTIALS
 
 async function gdriveAuth() {
   const SCOPES = ['https://www.googleapis.com/auth/drive'];
-  const t = await axios.get('GD_TOKEN');
-  const c = await axios.get('CREDENTIALS')
+  const t = await axios.get(GD_TOKEN);
+  const c = await axios.get(CREDENTIALS)
   const credentials = c.data
   const token = t.data
   
