@@ -1,7 +1,9 @@
 const { readdir } = require('node:fs/promises')
 const { rename } = require('node:fs/promises')
 const { copyFile } = require('node:fs/promises')
-const { exec } = require('node:child_process');
+const { exec } = require('node:child_process')
+const path = require('path');
+
 
 async function bulkRenamer(path, fileName, gid) {
   const dir = await readdir(path, { withFileTypes: true })
@@ -14,11 +16,12 @@ async function bulkRenamer(path, fileName, gid) {
   })
   console.log('Done renaming')
   await copyFile(__dirname+'/How-To-Buy.txt', fullDirPath+'/How-To-Buy.txt')
-  return { fileName, fullDirPath }
+  return fullDirPath
 }
 
 function archive(fileName, filePath) {
-  const exc = exec(`../archive.sh "${fileName}" "${filePath}"`, { cwd: __dirname })
+  const parentPath = path.dirname(filePath)
+  const exc = exec(`../archive.sh "${fileName}" "${parentPath}"`, { cwd: __dirname })
   return new Promise((resolve, reject) => {
     exc.stdout.on('data', (data) => {
       console.log(data);

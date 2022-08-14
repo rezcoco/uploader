@@ -34,6 +34,7 @@ if (IS_DB) main();
 (async () => {
 try {
   await setup()
+  console.log('Auth config created!')
   await exec('../aria.sh', { cwd: __dirname })
   console.log('Aria2 running')
   await sleep(1000)
@@ -54,7 +55,7 @@ async function uploadCmdHandler(msg, match) {
   
   const db = await Link.find()
  
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < 4; i++) {
     const link = db[i].link
     if (Array.isArray(link)) {
       for (const l of link) {
@@ -136,17 +137,17 @@ aria2.on('onDownloadComplete', async ([data]) => {
           console.log('Closed: ', code)
           dl.status = downloadStatus['STATUS_RENAMING']
           message.sendStatusMessage()
-          const renamed = await bulkRenamer(dir, fileName)
+          const fullDirPath = await bulkRenamer(dir, fileName)
           
           dl.status = downloadStatus['STATUS_ARCHIVING']
-          //message.sendStatusMessage()
-          //const filenameDotRar = await archive(fileName, renamed.fullDirPath)
+          message.sendStatusMessage()
+          const filenameDotRar = await archive(fileName, fullDirPath)
           
           dl.status = downloadStatus['STATUS_UPLOADING']
           interval.push(gid)
-          //message.sendStatusMessage()
+          message.sendStatusMessage()
           const fullPath = dir+filenameDotRar
-          //await upload(filenameDotRar, fullPath, gid)
+          await upload(filenameDotRar, fullPath, gid)
         })
       }
     } catch (e) {
@@ -167,4 +168,3 @@ process.on('exit', () => {
 
 bot.onText(/\/upload (.+)/, uploadCmdHandler)
 bot.onText(/\/cancel (.+)/, cancelHandler)
-
