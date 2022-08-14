@@ -24,6 +24,7 @@ async function upload(fileName, filePath, gid) {
       supportsAllDrives: true,
       requestBody: {
         name: fileName,
+        driveId: teamDriveID,
         parents: [teamDriveID],
         description: 'Uploded by rezcoco'
       },
