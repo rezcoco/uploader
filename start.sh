@@ -1,1 +1,1 @@
-node setup && npm start
+node setup
