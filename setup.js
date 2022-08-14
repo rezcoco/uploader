@@ -9,6 +9,7 @@ async function setup() {
   
   await writeFile(__dirname+'/credentials.json', JSON.stringify(credentials.data))
   await writeFile(__dirname+'/token.json', JSON.stringify(token.data))
+  console.log('Auth config created')
   return
 };
 
