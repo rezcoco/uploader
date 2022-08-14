@@ -140,7 +140,7 @@ aria2.on('onDownloadComplete', async ([data]) => {
           
           dl.status = downloadStatus['STATUS_ARCHIVING']
           message.sendStatusMessage()
-          const filenameDotRar = await archive(renamed.fileName, renamed.fullDirPath)
+          const filenameDotRar = await archive(fileName, renamed.fullDirPath)
           
           dl.status = downloadStatus['STATUS_UPLOADING']
           interval.push(gid)
