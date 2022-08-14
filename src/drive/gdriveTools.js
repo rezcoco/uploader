@@ -6,7 +6,7 @@ const { google } = require('googleapis');
 const { gdriveAuth } = require('./driveAuth')
 const { GdriveDownloadStatus, downloadStatus } = require('../dlStatus')
 const { download_list, interval } = require('../utils')
-const teamDriveID = "0ACOk4dkaBLsNUk9PVA"
+const teamDriveID = process.env.TD_ID
 
 
 async function upload(fileName, filePath, gid) {
@@ -24,7 +24,6 @@ async function upload(fileName, filePath, gid) {
       supportsAllDrives: true,
       requestBody: {
         name: fileName,
-        driveId: teamDriveID,
         parents: [teamDriveID],
         description: 'Uploded by rezcoco'
       },
