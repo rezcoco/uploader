@@ -22,3 +22,4 @@ jobs:
           HD_IS_DB: ${{secrets.IS_DB}}
           HD_GD_TOKEN: ${{secrets.GD_TOKEN}}
           HD_CREDENTIALS: ${{secrets.CREDENTIALS}}
+          HD_TD_ID: ${{secrets.TD_ID}}
