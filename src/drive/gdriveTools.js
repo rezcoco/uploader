@@ -2,7 +2,6 @@ require('dotenv').config()
 const { createReadStream } = require('fs');
 const { stat } = require('node:fs/promises');
 const mime = require('mime');
-const { GoogleAuth } = require('google-auth-library');
 const { google } = require('googleapis');
 const { gdriveAuth } = require('./driveAuth')
 const { GdriveDownloadStatus, downloadStatus } = require('../dlStatus')
@@ -11,7 +10,7 @@ const teamDriveID = process.env.TD_ID
 
 
 async function upload(fileName, filePath, gid) {
-  const auth = gdriveAuth()
+  const auth = await gdriveAuth()
   const drive = google.drive({ version: 'v3', auth });
   const f = await stat(filePath)
   
