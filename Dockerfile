@@ -15,5 +15,5 @@ ENV LC_ALL en_US.UTF-8
  
 RUN npm install
 
-CMD [ "bash", "start.sh" ]
+CMD [ "npm", "start" ]
 
