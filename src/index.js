@@ -54,7 +54,7 @@ async function uploadCmdHandler(msg, match) {
   
   const db = await Link.find()
  
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 1; i++) {
     const link = db[i].link
     if (Array.isArray(link)) {
       for (const l of link) {
