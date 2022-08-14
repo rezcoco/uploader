@@ -2,4 +2,4 @@ build:
   docker:
     web: Dockerfile
 run:
-  worker: node setup
+  web: node setup
