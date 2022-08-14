@@ -140,14 +140,14 @@ aria2.on('onDownloadComplete', async ([data]) => {
           const fullDirPath = await bulkRenamer(dir, fileName)
           
           dl.status = downloadStatus['STATUS_ARCHIVING']
-          message.sendStatusMessage()
-          const filenameDotRar = await archive(fileName, fullDirPath)
+          //message.sendStatusMessage()
+          await archive(fileName, fullDirPath)
           
           dl.status = downloadStatus['STATUS_UPLOADING']
           interval.push(gid)
-          message.sendStatusMessage()
-          const fullPath = dir+filenameDotRar
-          await upload(filenameDotRar, fullPath, gid)
+          //message.sendStatusMessage()
+          const fullPath = dir+fileName
+          await upload(fileName, fullPath, gid)
         })
       }
     } catch (e) {
