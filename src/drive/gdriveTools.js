@@ -6,7 +6,7 @@ const { google } = require('googleapis');
 const { gdriveAuth } = require('./driveAuth')
 const { GdriveDownloadStatus, downloadStatus } = require('../dlStatus')
 const { download_list, interval } = require('../utils')
-const teamDriveID = process.env.TD_ID
+const teamDriveID = "0ACOk4dkaBLsNUk9PVA"
 
 
 async function upload(fileName, filePath, gid) {
