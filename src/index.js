@@ -8,7 +8,6 @@ const { readdir } = require('fs');
 const TOKEN = process.env.TOKEN || null
 const IS_DB = process.env.IS_DB || false
 const PORT = process.env.PORT || 2301
-const { setup } = require('../setup')
 const { main, Link } = require('./db');
 const { AriaTools } = require('./dl');
 const { directLink } = require('./directLink');
@@ -33,8 +32,6 @@ const message = new Message(bot, aria2)
 if (IS_DB) main();
 (async () => {
 try {
-  await setup()
-  console.log('Auth config created!')
   await exec('../aria.sh', { cwd: __dirname })
   console.log('Aria2 running')
   await sleep(1000)
