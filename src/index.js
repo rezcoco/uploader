@@ -32,8 +32,6 @@ const message = new Message(bot, aria2)
 if (IS_DB) main();
 (async () => {
 try {
-  await setup()
-  console.log('Auth config created!')
   await exec('../aria.sh', { cwd: __dirname })
   console.log('Aria2 running')
   await sleep(1000)
