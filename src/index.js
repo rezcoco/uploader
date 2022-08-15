@@ -8,7 +8,6 @@ const { readdir } = require('fs');
 const TOKEN = process.env.TOKEN || null
 const IS_DB = process.env.IS_DB || false
 const PORT = process.env.PORT || 2301
-const { setup } = require('../setup')
 const { main, Link } = require('./db');
 const { AriaTools } = require('./dl');
 const { directLink } = require('./directLink');
