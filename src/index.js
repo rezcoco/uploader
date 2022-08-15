@@ -52,7 +52,7 @@ async function uploadCmdHandler(msg, match) {
   
   const db = await Link.find()
  
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 4; i++) {
     const link = db[i].link
     if (Array.isArray(link)) {
       for (const l of link) {
@@ -70,7 +70,7 @@ async function uploadCmdHandler(msg, match) {
       await message.sendStatusMessage()
     }
   }
-  message.sendMessage(chatId, '<b>Upload Complete: \n</b>')
+  //message.sendMessage(chatId, '<b>Upload Complete: \n</b>')
 };
 
 async function cancelHandler(msg, match) {
@@ -142,7 +142,7 @@ aria2.on('onDownloadComplete', async ([data]) => {
           await upload(filenameDotRar, fullPath, gid)
           await clean(dir)
           delete download_list[gid]
-          console.log('Done 1 cycle')
+          
         })
       }
     } catch (e) {
