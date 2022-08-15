@@ -1,1 +1,3 @@
-unrar x "$1" "$2" -pmrcong.com -y
+fullpath="$1"
+dir="$2"
+unrar x "$fullpath" "$dir" -pmrcong.com -y && rm -rf "$fullpath"
