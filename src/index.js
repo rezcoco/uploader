@@ -145,7 +145,7 @@ aria2.on('onDownloadComplete', async ([data]) => {
           await upload(filenameDotRar, fullPath, gid)
           await clean(dir)
           delete download_list[gid]
-          
+          console.log('Done 1 cycle')
         })
       }
     } catch (e) {
