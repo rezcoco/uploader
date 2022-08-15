@@ -17,26 +17,18 @@ class Message {
     let msg = ''
     for (const id in download_list) {
       const dl = download_list[id],
-      status = await dl.status
-      if (status === downloadStatus['STATUS_UPLOADING']) {
-        const fileName = dl.fileName,
-        progress = dl.progress(),
-        uploaded = dl.completed,
-        total = dl.size
-        msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n${progress}\n<b>Uploaded: </b>${uploaded} of ${total}\n\n`
+      name = await dl.name(),
+      status = await dl.status,
+      progress = await dl.progress(),
+      downloaded = await dl.downloaded(),
+      total = await dl.total(),
+      speed = await dl.speed(),
+      time = await dl.time(),
+      gid = dl.gid
+      if (status === downloadStatus['STATUS_DOWNLOADING']) {
+        msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n${progress}\n<b>Downloaded: </b>${downloaded} of ${total}\n<b>Speed: </b>${speed} | <b>ETA: </b>${time}\n<code>/cancel ${gid}</code>\n\n`
       } else {
-        const name = await dl.name(),
-        progress = await dl.progress(),
-        downloaded = await dl.downloaded(),
-        total = await dl.total(),
-        speed = await dl.speed(),
-        time = await dl.time(),
-        gid = dl.gid
-        if (status === downloadStatus['STATUS_DOWNLOADING']) {
-          msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n${progress}\n<b>Downloaded: </b>${downloaded} of ${total}\n<b>Speed: </b>${speed} | <b>ETA: </b>${time}\n<code>/cancel ${gid}</code>\n\n`
-        } else {
-          msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n\n`
-        }
+        msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n\n`
       }
     }
     return msg

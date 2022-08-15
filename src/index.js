@@ -8,13 +8,14 @@ const { readdir } = require('fs');
 const TOKEN = process.env.TOKEN || null
 const IS_DB = process.env.IS_DB || false
 const PORT = process.env.PORT || 2301
+const { setup } = require('../setup')
 const { main, Link } = require('./db');
 const { AriaTools } = require('./dl');
 const { directLink } = require('./directLink');
 const { AriaDownloadStatus, downloadStatus } = require('./dlStatus');
 const { sleep, Message } = require('./msgUtils');
 const { download_list, interval } = require('./utils');
-const { bulkRenamer, archive } = require('./fsUtils');
+const { bulkRenamer, archive, clean } = require('./fsUtils');
 const { upload } = require('./drive/gdriveTools');
 
 const options = {
@@ -32,6 +33,8 @@ const message = new Message(bot, aria2)
 if (IS_DB) main();
 (async () => {
 try {
+  await setup()
+  console.log('Auth config created!')
   await exec('../aria.sh', { cwd: __dirname })
   console.log('Aria2 running')
   await sleep(1000)
@@ -52,7 +55,7 @@ async function uploadCmdHandler(msg, match) {
   
   const db = await Link.find()
  
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < 4; i++) {
     const link = db[i].link
     if (Array.isArray(link)) {
       for (const l of link) {
@@ -98,6 +101,7 @@ aria2.on('onDownloadComplete', async ([data]) => {
 
   const dl = download_list[gid]
   dl.status = downloadStatus['STATUS_EXTRACTING']
+  await message.sendStatusMessage()
   const fileName = await dl.name()
   const part = dl.part
   const dir = dl.dir
@@ -109,9 +113,6 @@ aria2.on('onDownloadComplete', async ([data]) => {
       if (part > 0) {
         if (files.length === part) {
           const exc = exec(`../extract.sh "${path}" ${dir}`, { cwd: __dirname })
-          exc.stdout.on('data', (data) => {
-            console.log(data);
-          });
           exc.stderr.on('data', (data) => {
             console.error(data);
           });
@@ -122,29 +123,29 @@ aria2.on('onDownloadComplete', async ([data]) => {
           })
         }
       } else {
+        console.log(`Extracting ${path}`)
         const exc = exec(`../extract.sh "${path}" ${dir}`, { cwd: __dirname })
-        message.sendStatusMessage()
-        exc.stdout.on('data', (data) => {
-          console.log(data);
-        });
+        await message.sendStatusMessage()
         exc.stderr.on('data', (data) => {
           console.error(data);
         });
         exc.on('close', async (code) => {
           console.log('Closed: ', code)
           dl.status = downloadStatus['STATUS_RENAMING']
-          message.sendStatusMessage()
+          await message.sendStatusMessage()
           const fullDirPath = await bulkRenamer(dir, fileName)
           
           dl.status = downloadStatus['STATUS_ARCHIVING']
-          //message.sendStatusMessage()
-          await archive(fileName, fullDirPath)
+          await message.sendStatusMessage()
+          const filenameDotRar = await archive(fileName, fullDirPath)
           
           dl.status = downloadStatus['STATUS_UPLOADING']
-          interval.push(gid)
-          //message.sendStatusMessage()
-          const fullPath = dir+fileName
-          await upload(fileName, fullPath, gid)
+          await message.sendStatusMessage()
+          const fullPath = dir+filenameDotRar
+          await upload(filenameDotRar, fullPath, gid)
+          await clean(dir)
+          delete download_list[gid]
+          
         })
       }
     } catch (e) {
