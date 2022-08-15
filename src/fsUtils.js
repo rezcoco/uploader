@@ -37,5 +37,5 @@ async function clean(path, gid) {
 }
 
 module.exports = {
-  bulkRenamer, archive
+  bulkRenamer, archive, clean
 }
