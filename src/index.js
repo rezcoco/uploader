@@ -52,15 +52,15 @@ async function addDownload(start) {
   if (Array.isArray(link)) {
     for (const l of link) {
       const uri = await directLink(l)
-      const gid = await ariaTools.addDownload(uri, i)
-      download_list[gid] = new AriaDownloadStatus(aria2, gid, i, downloadStatus['STATUS_DOWNLOADING'], link.length)
+      const gid = await ariaTools.addDownload(uri, index)
+      download_list[gid] = new AriaDownloadStatus(aria2, gid, index, downloadStatus['STATUS_DOWNLOADING'], link.length)
       interval.push(gid)
       await message.sendStatusMessage()
     }
   } else {
     const uri = await directLink(link)
-    const gid = await ariaTools.addDownload(uri, i)
-    download_list[gid] = new AriaDownloadStatus(aria2, gid, i, downloadStatus['STATUS_DOWNLOADING'])
+    const gid = await ariaTools.addDownload(uri, index)
+    download_list[gid] = new AriaDownloadStatus(aria2, gid, index, downloadStatus['STATUS_DOWNLOADING'])
     interval.push(gid)
     await message.sendStatusMessage()
   }
