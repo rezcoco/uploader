@@ -14,8 +14,8 @@ class Message {
   }
   
   async generateStatusMessage() {
-    const time = new Date()
-    const minutes = time.getMinutes(), seconds = time.getSeconds()
+    const t = new Date()
+    const minutes = t.getMinutes(), seconds = t.getSeconds()
     let msg = ''
     for (const id in download_list) {
       const dl = download_list[id],
