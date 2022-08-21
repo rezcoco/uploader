@@ -14,7 +14,7 @@ const { AriaTools } = require('./dl');
 const { directLink } = require('./directLink');
 const { AriaDownloadStatus, downloadStatus } = require('./dlStatus');
 const { sleep, Message } = require('./msgUtils');
-const { download_list, interval, index, indexEnd } = require('./utils');
+const { download_list, interval } = require('./utils');
 const { bulkRenamer, archive, clean } = require('./fsUtils');
 const { upload } = require('./drive/gdriveTools');
 const options = {
@@ -28,6 +28,8 @@ const bot = new TelegramBot(TOKEN, {polling: true});
 const aria2 = new Aria2([options])
 const ariaTools = new AriaTools(bot, aria2)
 const message = new Message(bot, aria2)
+let index = 0
+let indexEnd = 1
 
 if (IS_DB) main();
 (async () => {
