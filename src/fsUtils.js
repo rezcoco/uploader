@@ -29,10 +29,10 @@ function archive(fileName, filePath) {
   })
 }
 
-async function clean(path, gid) {
+async function clean(path) {
   return rm(path, { recursive: true })
 }
 
 module.exports = {
-  bulkRenamer, archive
+  bulkRenamer, archive, clean
 }
