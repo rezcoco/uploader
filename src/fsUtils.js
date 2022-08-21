@@ -3,7 +3,7 @@ const { exec } = require('node:child_process')
 const path = require('path');
 
 
-async function bulkRenamer(path, fileName, gid) {
+async function bulkRenamer(path, fileName) {
   const dir = await readdir(path, { withFileTypes: true })
   const dirname = dir.filter((dirent) => dirent.isDirectory())[0].name
   const fullDirPath = path+dirname+'/'
