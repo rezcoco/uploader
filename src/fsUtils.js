@@ -23,7 +23,7 @@ function archive(fileName, filePath) {
       reject(data)
     });
     exc.on('close', (code) => {
-      console.log('Closed: ', code)
+      console.log('Archived: ', code)
       resolve(fileName)
     })
   })
