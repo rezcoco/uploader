@@ -4,6 +4,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const Aria2 = require("aria2");
 const app = require('express')();
 const { exec } = require('node:child_process');
+const { writeFile } = require('node:fs/promises');
 const { readdir } = require('fs');
 const TOKEN = process.env.TOKEN || null
 const IS_DB = process.env.IS_DB || false
@@ -13,10 +14,9 @@ const { AriaTools } = require('./dl');
 const { directLink } = require('./directLink');
 const { AriaDownloadStatus, downloadStatus } = require('./dlStatus');
 const { sleep, Message } = require('./msgUtils');
-const { download_list, interval } = require('./utils');
+const { download_list, interval, index, indexEnd } = require('./utils');
 const { bulkRenamer, archive, clean } = require('./fsUtils');
 const { upload } = require('./drive/gdriveTools');
-
 const options = {
   host: 'localhost',
   port: 6800,
@@ -24,11 +24,11 @@ const options = {
   secret: '',
   path: '/jsonrpc'
 }
-
 const bot = new TelegramBot(TOKEN, {polling: true});
 const aria2 = new Aria2([options])
 const ariaTools = new AriaTools(bot, aria2)
 const message = new Message(bot, aria2)
+
 if (IS_DB) main();
 (async () => {
 try {
@@ -42,34 +42,43 @@ try {
 }
 })()
 
-async function uploadCmdHandler(msg, match) {
-  const chatId = msg.chat.id;
-  const resp = match[1];
-  
-  message.sendMessage(chatId, '<i>Uploading...</i>')
-  //const start = resp.match(/start\s\d+/) ? Number(startRegex[0].split(' ')[1]) : 0
-  //const end = resp.match(/end\s\d+/) ? Number(endRegex[0].split(' ')[1]) : db.length
-  
+async function addDownload(start) {
+  index = start
   const db = await Link.find()
- 
-  for (let i = 0; i < 3; i++) {
-    const link = db[i].link
-    if (Array.isArray(link)) {
-      for (const l of link) {
-        const uri = await directLink(l)
-        const gid = await ariaTools.addDownload(uri, i)
-        download_list[gid] = new AriaDownloadStatus(aria2, gid, i, downloadStatus['STATUS_DOWNLOADING'], link.length)
-        interval.push(gid)
-        await message.sendStatusMessage()
-      }
-    } else {
-      const uri = await directLink(link)
+  const link = db[start].link
+  if (Array.isArray(link)) {
+    for (const l of link) {
+      const uri = await directLink(l)
       const gid = await ariaTools.addDownload(uri, i)
-      download_list[gid] = new AriaDownloadStatus(aria2, gid, i, downloadStatus['STATUS_DOWNLOADING'])
+      download_list[gid] = new AriaDownloadStatus(aria2, gid, i, downloadStatus['STATUS_DOWNLOADING'], link.length)
       interval.push(gid)
       await message.sendStatusMessage()
     }
+  } else {
+    const uri = await directLink(link)
+    const gid = await ariaTools.addDownload(uri, i)
+    download_list[gid] = new AriaDownloadStatus(aria2, gid, i, downloadStatus['STATUS_DOWNLOADING'])
+    interval.push(gid)
+    await message.sendStatusMessage()
   }
+}
+
+async function uploadCmdHandler(msg, match) {
+  const chatId = msg.chat.id;
+  const resp = match[1];
+
+  message.sendMessage(chatId, '<i>Uploading...</i>')
+  
+  const sRegex = resp.match(/start\s\d/)
+  const eRegex = resp.match(/end\s\d/)
+  const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
+  const end = eRegex ? Number(eRegex[0].split(' ')[1]) : db.length
+  indexEnd = end
+
+  for (let i=start; i<i+4; i++) {
+    addDownload(i)
+  }
+  
   //message.sendMessage(chatId, '<b>Upload Complete: \n</b>')
 };
 
@@ -127,8 +136,7 @@ aria2.on('onDownloadComplete', async ([data]) => {
           console.error(data);
         });
         exc.on('close', async (code) => {
-          console.log('Extracted: ', code)
-          await clean(path)
+          console.log('Closed: ', code)
           dl.status = downloadStatus['STATUS_RENAMING']
           await message.sendStatusMessage()
           const fullDirPath = await bulkRenamer(dir, fileName)
@@ -143,6 +151,8 @@ aria2.on('onDownloadComplete', async ([data]) => {
           await upload(fileName, fullPath)
           await clean(dir)
           delete download_list[gid]
+          
+          if (index !== indexEnd) addDownload(index+1)
         })
       }
     } catch (e) {
