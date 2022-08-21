@@ -57,13 +57,14 @@ async function addDownload(start) {
       interval.push(gid)
       await message.sendStatusMessage()
     }
-  } else {
-    const uri = await directLink(link)
-    const gid = await ariaTools.addDownload(uri, start)
-    download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus['STATUS_DOWNLOADING'])
-    interval.push(gid)
-    await message.sendStatusMessage()
-  }
+    return
+  } 
+  const uri = await directLink(link)
+  const gid = await ariaTools.addDownload(uri, start)
+  download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus['STATUS_DOWNLOADING'])
+  interval.push(gid)
+  await message.sendStatusMessage()
+  return
 }
 
 async function uploadCmdHandler(msg, match) {
@@ -79,7 +80,7 @@ async function uploadCmdHandler(msg, match) {
   indexEnd = end
 
   for (let i=start; i<=end; i++) {
-    addDownload(i)
+    await addDownload(i)
   }
   
   //message.sendMessage(chatId, '<b>Upload Complete: \n</b>')
