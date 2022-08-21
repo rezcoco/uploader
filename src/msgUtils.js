@@ -1,4 +1,4 @@
-const { download_list, interval } = require('./utils');
+const { download_list, interval, index } = require('./utils');
 const { downloadStatus } = require('./dlStatus');
 
 function sleep(ms) {
@@ -14,6 +14,8 @@ class Message {
   }
   
   async generateStatusMessage() {
+    const time = new Date()
+    const minutes = time.getMinutes(), seconds = time.getSeconds()
     let msg = ''
     for (const id in download_list) {
       const dl = download_list[id],
@@ -31,6 +33,8 @@ class Message {
         msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n\n`
       }
     }
+    msg+= `<b>Index: ${index}</b>\n`
+    msg+= `${minutes+7}:${seconds}`
     return msg
 }
   

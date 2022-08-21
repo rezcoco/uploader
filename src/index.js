@@ -44,6 +44,7 @@ try {
 
 async function addDownload(start) {
   index = start
+  console.log(`Index file downloaded: ${index}`)
   const db = await Link.find()
   const link = db[start].link
   if (Array.isArray(link)) {
@@ -72,10 +73,10 @@ async function uploadCmdHandler(msg, match) {
   const sRegex = resp.match(/start\s\d/)
   const eRegex = resp.match(/end\s\d/)
   const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
-  const end = eRegex ? Number(eRegex[0].split(' ')[1]) : db.length
+  const end = eRegex ? Number(eRegex[0].split(' ')[1]) : 100
   indexEnd = end
 
-  for (let i=start; i<i+4; i++) {
+  for (let i=start; i<=end; i++) {
     addDownload(i)
   }
   
