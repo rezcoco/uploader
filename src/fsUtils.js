@@ -19,7 +19,7 @@ async function bulkRenamer(path, fileName) {
 
 function archive(fileName, filePath) {
   const parentPath = path.dirname(filePath)
-  console.log(`Archiving ${fileName}`)
+  console.log(`Archiving ${filePath}`)
   const exc = exec(`../archive.sh "${fileName}" "${parentPath}"`, { cwd: __dirname })
   return new Promise((resolve, reject) => {
     exc.stderr.on('data', (data) => {
