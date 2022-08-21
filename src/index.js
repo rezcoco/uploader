@@ -141,7 +141,7 @@ aria2.on('onDownloadComplete', async ([data]) => {
           await message.sendStatusMessage()
           const fullPath = dir+filenameDotRar
           await upload(filenameDotRar, fullPath, gid)
-          await clean(dir)
+          //await clean(dir)
           delete download_list[gid]
           
         })
