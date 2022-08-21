@@ -135,15 +135,14 @@ aria2.on('onDownloadComplete', async ([data]) => {
           
           dl.status = downloadStatus['STATUS_ARCHIVING']
           await message.sendStatusMessage()
-          const filenameDotRar = await archive(fileName, fullDirPath)
+          await archive(fileName, fullDirPath)
           
           dl.status = downloadStatus['STATUS_UPLOADING']
           await message.sendStatusMessage()
-          const fullPath = dir+filenameDotRar
-          await upload(filenameDotRar, fullPath, gid)
+          const fullPath = dir+fileName
+          await upload(fileName, fullPath)
           //await clean(dir)
           delete download_list[gid]
-          
         })
       }
     } catch (e) {
