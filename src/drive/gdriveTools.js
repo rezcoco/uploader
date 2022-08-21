@@ -8,7 +8,7 @@ const { GdriveDownloadStatus, downloadStatus } = require('../dlStatus')
 const teamDriveID = process.env.TD_ID
 
 
-async function upload(fileName, filePath, gid) {
+async function upload(fileName, filePath) {
   const auth = await gdriveAuth()
   const drive = google.drive({ version: 'v3', auth });
   
