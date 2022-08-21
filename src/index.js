@@ -52,7 +52,7 @@ async function uploadCmdHandler(msg, match) {
   
   const db = await Link.find()
  
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < 3; i++) {
     const link = db[i].link
     if (Array.isArray(link)) {
       for (const l of link) {
@@ -127,7 +127,7 @@ aria2.on('onDownloadComplete', async ([data]) => {
           console.error(data);
         });
         exc.on('close', async (code) => {
-          console.log('Closed: ', code)
+          console.log('Extracted: ', code)
           await clean(path)
           dl.status = downloadStatus['STATUS_RENAMING']
           await message.sendStatusMessage()
