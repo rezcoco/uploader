@@ -139,8 +139,11 @@ aria2.on('onDownloadComplete', async ([data]) => {
         exc.stderr.on('data', (data) => {
           console.error(data);
         });
+        exc.stdout.on('data', (data) => {
+          console.log(data)
+        })
         exc.on('close', async (code) => {
-          console.log('Closed: ', code)
+          console.log('Extracted: ', code)
           dl.status = downloadStatus['STATUS_RENAMING']
           await message.sendStatusMessage()
           const fullDirPath = await bulkRenamer(dir, fileName)
