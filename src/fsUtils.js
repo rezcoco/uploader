@@ -20,7 +20,7 @@ function archive(fileName, filePath) {
   const exc = exec(`../archive.sh "${fileName}" "${filePath}"`, { cwd: __dirname })
   return new Promise((resolve, reject) => {
     exc.stderr.on('data', (data) => {
-      reject(data)
+      console.error(data)
     });
     exc.stdout.on('data', (data) => {
       console.log(data)
