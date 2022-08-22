@@ -22,6 +22,9 @@ function archive(fileName, filePath) {
     exc.stderr.on('data', (data) => {
       reject(data)
     });
+    exc.stdout.on('data', (data) => {
+      console.log(data)
+    })
     exc.on('close', (code) => {
       console.log('Archived: ', code)
       resolve(fileName)
