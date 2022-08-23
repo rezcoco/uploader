@@ -133,15 +133,13 @@ aria2.on('onDownloadComplete', async ([data]) => {
           })
         }
       } else {
+        await clean(path)
         console.log(`Extracting ${path}`)
         const exc = exec(`../extract.sh "${path}" ${dir}`, { cwd: __dirname })
         await message.sendStatusMessage()
         exc.stderr.on('data', (data) => {
           console.error(data);
         });
-        exc.stdout.on('data', (data) => {
-          console.log(data)
-        })
         exc.on('close', async (code) => {
           console.log('Extracted: ', code)
           dl.status = downloadStatus['STATUS_RENAMING']
