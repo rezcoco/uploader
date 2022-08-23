@@ -2,7 +2,7 @@ const downloadStatus = {
   STATUS_UPLOADING: "Uploading...📤",
   STATUS_DOWNLOADING: "Downloading...📥",
   STATUS_FAILED: "Failed 🚫. Cleaning download",
-  SATUS_ARCHIVING: "Archiving...🔐",
+  STATUS_ARCHIVING: "Archiving...🔐",
   STATUS_EXTRACTING: "Extracting...📂",
   STATUS_RENAMING: 'Renamaing...✏️',
   STATUS_CANCELLED: "Cancelled...❌"
