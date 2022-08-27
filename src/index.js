@@ -174,7 +174,7 @@ app.listen(PORT, () => console.log(`Listening on port ${PORT}`))
 
 process.on('exit', () => {
   ariaTools.stop()
-  clean(__dirname+/'downloads')
+  clean(__dirname+'/downloads')
 });
 
 bot.onText(/\/upload (.+)/, uploadCmdHandler)
