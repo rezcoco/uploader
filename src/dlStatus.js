@@ -86,7 +86,7 @@ function formatNumber (n) {
 
 function getFileName(filePath) {
   const { path } = filePath
-  const r = path.match(/(?=downloads\/\d\/).+/)
+  const r = path.match(/(?=downloads\/\d+\/).+/)
   if (r) {
     return r[0].split('/')[2]
   }
