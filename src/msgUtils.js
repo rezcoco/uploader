@@ -34,7 +34,7 @@ class Message {
       }
     }
     msg+= `<b>Index: ${index}</b>\n`
-    msg+= `${minutes+7}:${seconds}`
+    msg+= `${minutes}:${seconds}`
     return msg
 }
   
