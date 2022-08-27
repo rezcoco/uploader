@@ -73,8 +73,8 @@ async function uploadCmdHandler(msg, match) {
 
   message.sendMessage(chatId, '<i>Uploading...</i>')
   
-  const sRegex = resp.match(/start\s\d/)
-  const eRegex = resp.match(/end\s\d/)
+  const sRegex = resp.match(/start\s\d+/)
+  const eRegex = resp.match(/end\s\d+/)
   const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
   const end = eRegex ? Number(eRegex[0].split(' ')[1]) : 4
   indexEnd = end
