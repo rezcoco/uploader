@@ -106,7 +106,6 @@ class AriaDownloadStatus {
   }
   async name() { 
     const { files } = await this.getDownload(['files'])
-    console.log(files)
     return getFileName(files[0])
   }
   async path() {
