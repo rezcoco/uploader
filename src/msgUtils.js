@@ -33,7 +33,7 @@ class Message {
         msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n\n`
       }
     }
-    msg+= `<b>Index: ${index}</b>\n`
+    //msg+= `<b>Index: ${index}</b>\n`
     msg+= `${minutes}:${seconds}`
     return msg
 }

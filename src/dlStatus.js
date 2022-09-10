@@ -53,7 +53,7 @@ function convertTime(s) {
 }
 
 function eta(totalLength, completedLength, speed) {
-  if (!totalLength && !completedLength && !speed) {
+  if (totalLength == 0 || completedLength == 0) {
     return 0 + 's'
   }
   const remainingLength = totalLength - completedLength
@@ -87,6 +87,7 @@ function formatNumber (n) {
 function getFileName(filePath) {
   const { path } = filePath
   const r = path.match(/(?=downloads\/\d+\/).+/)
+  console.log(r)
   if (r) {
     return r[0].split('/')[2]
   }
@@ -106,6 +107,7 @@ class AriaDownloadStatus {
   }
   async name() { 
     const { files } = await this.getDownload(['files'])
+    console.log(files)
     return getFileName(files[0])
   }
   async path() {
@@ -134,16 +136,5 @@ class AriaDownloadStatus {
   }
 }
 
-class GdriveDownloadStatus {
-  constructor (fileName, status, size=0, completed=0) {
-    this.fileName = fileName,
-    this.size = size,
-    this.completed = completed,
-    this.status = status
-  }
-  progress() {
-    return generateProgress(completed, size)
-  }
-}
 
-module.exports = { AriaDownloadStatus, GdriveDownloadStatus, downloadStatus }
+module.exports = { AriaDownloadStatus, downloadStatus }
