@@ -104,7 +104,7 @@ async function addDownload(start) {
   const link = db[start].link
   if (Array.isArray(link)) {
     parts[start] = []
-    for (const l of link) {
+    for (let i=0; i<link.length; i++) {
       parts[start].push(false)
       const uri = await directLink(l)
       const gid = await ariaTools.addDownload(uri, start)
