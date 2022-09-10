@@ -123,6 +123,9 @@ async function addDownload(start) {
 }
 
 async function nextStep(gid, isPart=false) {
+  // delete interval
+  const intervalId = interval.findIndex((i) => i == gid )
+  interval.splice(intervalId, 1)
   const dl = download_list[gid]
   dl.status = downloadStatus['STATUS_EXTRACTING']
   await message.sendStatusMessage()
@@ -159,9 +162,6 @@ async function nextStep(gid, isPart=false) {
     const fullPath = dir+fileName
     await upload(fileName, fullPath)
     await clean(dir)
-    // delete interval
-    const intervalId = interval.findIndex((i) => i == gid )
-    interval.splice(intervalId, 1)
     delete download_list[gid]
     return
   })
