@@ -99,36 +99,30 @@ async function cancelHandler(msg, match) {
 
 async function addDownload(start) {
   index.current = start
-  console.log(`Index file downloaded: ${index}`)
+  console.log(`Index file downloaded: ${index.current}`)
   const db = await Link.find()
   const link = db[start].link
   if (Array.isArray(link)) {
     parts[start] = []
     for (let i=0; i<link.length; i++) {
       parts[start].push(false)
-      const uri = await directLink(l)
+      const uri = await directLink(link[i])
       const gid = await ariaTools.addDownload(uri, start)
       download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus['STATUS_DOWNLOADING'], { parent: start,  order: i})
       interval.push(gid)
       await message.sendStatusMessage()
     }
+  } else {
+    const uri = await directLink(link)
+    const gid = await ariaTools.addDownload(uri, start)
+    download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus['STATUS_DOWNLOADING'])
+    interval.push(gid)
+    await message.sendStatusMessage()
     return
-  } 
-  const uri = await directLink(link)
-  const gid = await ariaTools.addDownload(uri, start)
-  download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus['STATUS_DOWNLOADING'])
-  interval.push(gid)
-  await message.sendStatusMessage()
-  return
+  }
 }
 
-
-aria2.on('onDownloadComplete', async ([data]) => {
-  const { gid } = data
-  // delete interval
-  const intervalId = interval.findIndex((i) => i == gid )
-  interval.splice(intervalId, 1)
-
+async function nextStep(gid, isPart=false) {
   const dl = download_list[gid]
   dl.status = downloadStatus['STATUS_EXTRACTING']
   await message.sendStatusMessage()
@@ -136,52 +130,62 @@ aria2.on('onDownloadComplete', async ([data]) => {
   const part = dl.part
   const dir = dl.dir
   const path = await dl.path()
+
+  console.log(`Extracting ${path}`)
+
+  let exc 
+  if (isPart) {
+    exc = exec(`../extract.sh "${dir}"`, { cwd: __dirname })
+  } else {
+    exc = exec(`../extract.sh "${path}" ${dir}`, { cwd: __dirname })
+  }
+  await message.sendStatusMessage()
+  exc.stderr.on('data', (data) => {
+    console.error(data);
+  });
+  exc.on('close', async (code) => {
+    await clean(path)
+    console.log('Extracted: ', code)
+    dl.status = downloadStatus['STATUS_RENAMING']
+    await message.sendStatusMessage()
+    const fullDirPath = await bulkRenamer(dir, fileName)
+    
+    dl.status = downloadStatus['STATUS_ARCHIVING']
+    await message.sendStatusMessage()
+    await archive(fileName, fullDirPath)
+    
+    dl.status = downloadStatus['STATUS_UPLOADING']
+    await message.sendStatusMessage()
+    const fullPath = dir+fileName
+    await upload(fileName, fullPath)
+    await clean(dir)
+    // delete interval
+    const intervalId = interval.findIndex((i) => i == gid )
+    interval.splice(intervalId, 1)
+    delete download_list[gid]
+    return
+  })
+}
+
+
+aria2.on('onDownloadComplete', async ([data]) => {
+  const { gid } = data
+  const dl = download_list[gid]
+  const part = dl.part
   
   try {
     if (part) {
       const { parent, order } = part
+      parts[parent][order] = true
       const isDone = parts[parent].every(e => e)
 
       if (isDone) {
-        const exc = exec(`../extract.sh "${path}" ${dir}`, { cwd: __dirname })
-        exc.stderr.on('data', (data) => {
-          console.error(data);
-        });
-        exc.on('close', (code) => {
-          console.log('Extracted: ', code)
-          parts[parent][order] = true
-          dl.status = downloadStatus['STATUS_RENAMING']
-          bulkRenamer(dir, fileName)
-        })
+        await nextStep(gid, true)
       }
     } else {
-      console.log(`Extracting ${path}`)
-      const exc = exec(`../extract.sh "${path}" ${dir}`, { cwd: __dirname })
-      await message.sendStatusMessage()
-      exc.stderr.on('data', (data) => {
-        console.error(data);
-      });
-      exc.on('close', async (code) => {
-        await clean(path)
-        console.log('Extracted: ', code)
-        dl.status = downloadStatus['STATUS_RENAMING']
-        await message.sendStatusMessage()
-        const fullDirPath = await bulkRenamer(dir, fileName)
-        
-        dl.status = downloadStatus['STATUS_ARCHIVING']
-        await message.sendStatusMessage()
-        await archive(fileName, fullDirPath)
-        
-        dl.status = downloadStatus['STATUS_UPLOADING']
-        await message.sendStatusMessage()
-        const fullPath = dir+fileName
-        await upload(fileName, fullPath)
-        await clean(dir)
-        delete download_list[gid]
-        
-        if (index.current !== index.last) return addDownload(index.current+1)
-      })
+      await nextStep(gid)
     }
+    if (index.current !== index.last) return addDownload(index.current+1)
   } catch (e) {
     console.log(e)
   }
