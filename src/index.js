@@ -22,6 +22,7 @@ const bot = new TelegramBot(TOKEN, {polling: true});
 const aria2 = new Aria2([options])
 const ariaTools = new AriaTools(bot, aria2)
 const message = new Message(bot, aria2)
+const MAX_QUEUES = 4
 const QUEUES = []
 
 if (IS_DB) main();
@@ -32,7 +33,8 @@ try {
   await sleep(1000)
   await aria2.open()
   console.log('Websocket opened')
-  index.total = await Link.find()
+  index.total = (await Link.find()).length
+  console.log(index.total)
 } catch (e) {
   console.log(e)
 }
@@ -76,20 +78,27 @@ async function uploadAll(msg, match) {
 
 async function cancelHandler(msg, match) {
   const chatId = msg.chat.id;
-  const resp = match[1]
+  const gid = match[1]
   
-  await message.sendMessage(chatId, `Canceling <i>${resp}...</i>`)
+  await message.sendMessage(chatId, `Canceling <i>${gid}...</i>`)
+  const cancel = await ariaTools.cancel(gid)
   
-  const { files } = await ariaTools.getStatus(resp)
-  const fileName = getFileName(files[0])
-  const cancel = await ariaTools.cancel(resp)
-  
-  // if (cancel == 'OK') {
-  //   await message.editMessage(`<i>${fileName}</i> deleted`)
-  // } else {
-  //   await message.editMessage(`Failed to delete <i>${fileName}</i>`)
-  // }
-  console.log(cancel)
+  if (cancel === gid) {
+    const intervalId = interval.findIndex(i => i === gid )
+    const queuesId = QUEUES.findIndex(i => i === gid)
+    interval.splice(intervalId, 1)
+    QUEUES.splice(queuesId, 1)
+    delete download_list[gid]
+
+    console.log('Deleted: ', cancel)
+    await message.editMessage(`<i>${gid}</i> deleted`)
+
+    if (index.current !== index.last && QUEUES.length < MAX_QUEUES) {
+      console.log(`Next ${index.current+1}`)
+      return addDownload(index.current+1)
+    }
+  } 
+  await message.editMessage(`Failed to delete <i>${gid}</i>`)
 }
 
 async function addDownload(start) {
@@ -167,7 +176,11 @@ async function nextStep(gid, isPart=false) {
     const queuesId = QUEUES.findIndex(i => i === gid)
     QUEUES.splice(queuesId, 1)
     delete download_list[gid]
-    return
+    
+    if (index.current !== index.last && QUEUES.length < MAX_QUEUES) {
+      console.log(`Next ${index.current+1}`)
+      return addDownload(index.current+1)
+    }
   })
 }
 
@@ -190,7 +203,6 @@ aria2.on('onDownloadComplete', async ([data]) => {
     } else {
       await nextStep(gid)
     }
-    if (index.current !== index.last && QUEUES.length === 0) return addDownload(index.current+1)
   } catch (e) {
     console.log(e)
   }
