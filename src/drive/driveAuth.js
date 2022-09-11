@@ -11,7 +11,7 @@ async function gdriveAuth() {
   const credentials = c.data
   const token = t.data
   
-  const { client_secret, client_id, redirect_uris } = credentials.installed;
+  const { client_secret, client_id, redirect_uris } = credentials.web;
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
   oAuth2Client.setCredentials(token)
   return oAuth2Client
