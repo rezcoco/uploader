@@ -122,6 +122,12 @@ async function addDownload(start) {
   }
 }
 
+function fn(fileName) {
+  const str = fileName.split('.');
+  str.splice(1,1)
+  return str.join('.')
+}
+
 async function nextStep(gid, isPart=false) {
   // delete interval
   const intervalId = interval.findIndex((i) => i == gid )
@@ -129,19 +135,15 @@ async function nextStep(gid, isPart=false) {
   const dl = download_list[gid]
   dl.status = downloadStatus['STATUS_EXTRACTING']
   await message.sendStatusMessage()
-  const fileName = await dl.name()
+  let fileName = await dl.name()
   const part = dl.part
   const dir = dl.dir
   const path = await dl.path()
+  const { parent } = part
 
-  console.log(`Extracting ${path}`)
-
-  let exc 
-  if (isPart) {
-    exc = exec(`../pextract.sh "${dir}"`, { cwd: __dirname })
-  } else {
-    exc = exec(`../extract.sh "${path}" ${dir}`, { cwd: __dirname })
-  }
+  const extPath = isPart ? parts[parent][0] : path
+  const exc = exec(`../extract.sh "${extPath}" ${dir}`, { cwd: __dirname })
+  console.log(`Extracting ${extPath}`)
   await message.sendStatusMessage()
   exc.stderr.on('data', (data) => {
     console.error(data);
@@ -155,6 +157,7 @@ async function nextStep(gid, isPart=false) {
     
     dl.status = downloadStatus['STATUS_ARCHIVING']
     await message.sendStatusMessage()
+    fileName = isPart ? fn(fileName) : fileName
     await archive(fileName, fullDirPath)
     
     dl.status = downloadStatus['STATUS_UPLOADING']
@@ -172,11 +175,12 @@ aria2.on('onDownloadComplete', async ([data]) => {
   const { gid } = data
   const dl = download_list[gid]
   const part = dl.part
+  const path = await dl.path()
   
   try {
     if (part) {
       const { parent, order } = part
-      parts[parent][order] = true
+      parts[parent][order] = path
       const isDone = parts[parent].every(e => e)
 
       if (isDone) {
@@ -191,8 +195,9 @@ aria2.on('onDownloadComplete', async ([data]) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('Running smooth like butter !')
+app.get('/', async (req, res) => {
+  const db = await Link.find();
+  res.json(db)
 })
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`))
 
