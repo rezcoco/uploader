@@ -197,8 +197,7 @@ aria2.on('onDownloadComplete', async ([data]) => {
 });
 
 app.get('/', async (req, res) => {
-  const db = await Link.find();
-  res.json(db)
+  res.send('Running smooth like butter!')
 })
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`))
 
