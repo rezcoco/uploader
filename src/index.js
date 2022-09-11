@@ -138,7 +138,7 @@ async function nextStep(gid, isPart=false) {
 
   let exc 
   if (isPart) {
-    exc = exec(`../extract.sh "${dir}"`, { cwd: __dirname })
+    exc = exec(`../pextract.sh "${dir}"`, { cwd: __dirname })
   } else {
     exc = exec(`../extract.sh "${path}" ${dir}`, { cwd: __dirname })
   }
