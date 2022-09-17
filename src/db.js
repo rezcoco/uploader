@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const { Schema } = require('mongoose');
+const mongoose = require('mongoose')
+const { Schema } = require('mongoose')
 const URI = process.env.URI
 
 const connectionParams = {
@@ -8,23 +8,23 @@ const connectionParams = {
 }
 
 const main = async () => {
-    await mongoose.connect(URI, connectionParams)
-      .then( () => console.log('Connected to Mongodb'))
-      .catch((err) => console.log(err))
-    return mongoose
+  await mongoose.connect(URI, connectionParams)
+    .then(() => console.log('Connected to Mongodb'))
+    .catch((err) => console.log(err))
+  return mongoose
 }
 
 const LinkSchema = new Schema({
   name: { type: String, unique: true },
-  link: Schema.Types.Mixed 
+  link: Schema.Types.Mixed
 })
 
-LinkSchema.statics.isDuplicate = async function(name) {
+LinkSchema.statics.isDuplicate = async function (name) {
   try {
-    const result = await this.findOne({name})
+    const result = await this.findOne({ name })
     if (result) return true
     return false
-  } catch(err) {
+  } catch (err) {
     console.log(err)
   }
 }
