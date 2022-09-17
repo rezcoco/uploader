@@ -46,8 +46,8 @@ class Message {
       const chat_id = this.botStatusMsg.chat.id
       while (interval.length !== 0) {
         const msg = await this.generateStatusMessage()
-        await sleep(10000)
         this.botStatusMsg = await this.bot.editMessageText(msg, { chat_id, message_id, parse_mode: 'HTML' })
+        await sleep(10000)
       }
     } catch (e) {
       console.log(e)
@@ -84,6 +84,11 @@ class Message {
     const { message_id } = this.botStatusMsg
     const chat_id = this.botStatusMsg.chat.id
     this.botStatusMsg = await this.bot.editMessageText(msg, { chat_id, message_id, parse_mode: 'HTML' })
+  }
+  async deleteStatusMessage () {
+    const {  message_id } = this.botStatusMsg
+    const chat_id = this.botStatusMsg.chat.id
+    await this.bot.deleteMessage(chat_id, message_id)
   }
 }
 

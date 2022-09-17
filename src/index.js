@@ -106,6 +106,19 @@ async function cancelHandler (msg, match) {
     })
 }
 
+async function cancelAllHandler (msg) {
+  const chat_id = msg.chat.id
+  await ariaTools.cancelAll()
+  interval.length = 0
+  QUEUES.length = 0
+  for (key of Object.keys(download_list)) {
+    delete download_list[key]
+  }
+  await message.deleteStatusMessage()
+  await message.sendMessage(chat_id, 'All tasks canceled')
+  console.clear()
+}
+
 async function addDownload (start) {
   index.current = start
   console.log(`Index file downloaded: ${index.current}`)
@@ -185,15 +198,17 @@ async function nextStep (gid, isPart = false) {
     await message.sendStatusMessage()
     const fullPath = dir + fileName
     await upload(fileName, fullPath)
+    await message.sendStatusMessage()
 
     index.count += 1
-    message.updateUploadStatusMessage(`<b>Upload Complete: </b>${fileName}\nTotal Uploaded: ${index.count}`)
+    await message.updateUploadStatusMessage(`<b>Upload Complete: </b>${fileName}\n\nTotal Uploaded: ${index.count}`)
 
     await clean(dir)
     // remove from queue
+    delete download_list[gid]
     const queuesId = QUEUES.findIndex(i => i === gid)
     QUEUES.splice(queuesId, 1)
-    delete download_list[gid]
+    if (QUEUES.length === 0) return message.deleteStatusMessage()
 
     if (index.current !== index.last && QUEUES.length < MAX_QUEUES) {
       console.log(`Next ${index.current + 1}`)
@@ -237,3 +252,4 @@ process.on('exit', () => {
 bot.onText(/\/upload (.+)/, uploadCmdHandler)
 bot.onText(/\/uploadall (.+)/, uploadAll)
 bot.onText(/\/cancel (.+)/, cancelHandler)
+bot.onText(/\/cancelall/, cancelAllHandler)

@@ -29,6 +29,11 @@ class AriaTools {
     }
   }
 
+  async cancelAll () {
+    await this.aria2.call('pauseAll')
+    return clean(path.join(__dirname, 'downloads'))
+  }
+
   async getStatus (gid) {
     try {
       return this.aria2.call('tellStatus', gid)
