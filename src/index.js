@@ -187,7 +187,7 @@ async function nextStep (gid, isPart = false) {
     await upload(fileName, fullPath)
 
     index.count += 1
-    message.updateStatusMessage(`<b>Upload Complete: </b> ${fileName}\nTotal Uploaded: ${index.count}`)
+    message.updateStatusMessage(`<b>Upload Complete: </b>${fileName}\nTotal Uploaded: ${index.count}`)
 
     await clean(dir)
     // remove from queue
