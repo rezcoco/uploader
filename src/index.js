@@ -109,15 +109,17 @@ async function cancelHandler (msg, match) {
 
 async function cancelAllHandler (msg) {
   const chat_id = msg.chat.id
-  await ariaTools.cancelAll()
-  interval.length = 0
-  QUEUES.length = 0
-  for (key of Object.keys(download_list)) {
-    delete download_list[key]
+  if (QUEUES.length > 0) {
+    await ariaTools.cancelAll()
+    interval.length = 0
+    QUEUES.length = 0
+    for (key of Object.keys(download_list)) {
+      delete download_list[key]
+    }
+    await message.deleteStatusMessage()
+    await message.sendMessage(chat_id, 'All tasks canceled')
+    console.clear()
   }
-  await message.deleteStatusMessage()
-  await message.sendMessage(chat_id, 'All tasks canceled')
-  console.clear()
 }
 
 async function addDownload (start) {
