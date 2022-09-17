@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 const { download_list, interval, index } = require('./utils')
 const { downloadStatus } = require('./dlStatus')
 
@@ -65,6 +64,16 @@ class Message {
     } catch (e) {
       console.log(e)
     }
+  }
+
+  async updateUploadStatusMessage (msg) {
+    const { message_id } = this.botCompleteMsg
+    const chat_id = this.botCompleteMsg.chat.id
+    this.botCompleteMsg = await this.bot.editMessageText(msg, { chat_id, message_id, parse_mode: 'HTML' })
+  }
+
+  async sendUploadMessage (chatId, msg) {
+    this.botCompleteMsg = await this.bot.sendMessage(chatId, msg, { parse_mode: 'HTML' })
   }
 
   async sendMessage (chatId, msg) {

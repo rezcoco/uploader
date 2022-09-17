@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 require('dotenv').config()
 
 const { exec } = require('node:child_process')
@@ -54,7 +53,7 @@ async function uploadCmdHandler (msg, match) {
     await addDownload(i)
   }
 
-  // message.sendMessage(chatId, '<b>Upload Complete: \n</b>')
+  message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
 };
 
 async function uploadAll (msg, match) {
@@ -115,21 +114,32 @@ async function addDownload (start) {
   if (Array.isArray(link)) {
     parts[start] = []
     for (let i = 0; i < link.length; i++) {
-      parts[start].push(false)
-      const uri = await directLink(link[i])
-      const gid = await ariaTools.addDownload(uri, start)
-      download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, { parent: start, order: i })
-      QUEUES.push(gid)
-      interval.push(gid)
-      await message.sendStatusMessage()
+      const { hostname } = new URL(link[i])
+      if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
+        parts[start].push(false)
+
+        const uri = await directLink(link[i])
+        const gid = await ariaTools.addDownload(uri, start)
+        download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, { parent: start, order: i })
+
+        QUEUES.push(gid)
+        interval.push(gid)
+
+        await message.sendStatusMessage()
+      }
     }
   } else {
-    const uri = await directLink(link)
-    const gid = await ariaTools.addDownload(uri, start)
-    download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING)
-    QUEUES.push(gid)
-    interval.push(gid)
-    await message.sendStatusMessage()
+    const { hostname } = new URL(link)
+    if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
+      const uri = await directLink(link)
+      const gid = await ariaTools.addDownload(uri, start)
+      download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING)
+
+      QUEUES.push(gid)
+      interval.push(gid)
+
+      await message.sendStatusMessage()
+    }
   }
 }
 
@@ -175,6 +185,9 @@ async function nextStep (gid, isPart = false) {
     await message.sendStatusMessage()
     const fullPath = dir + fileName
     await upload(fileName, fullPath)
+
+    index.count += 1
+    message.updateStatusMessage(`<b>Uploaded: </b> ${fileName}\nTotal Uploaded: ${index.count}`)
 
     await clean(dir)
     // remove from queue
