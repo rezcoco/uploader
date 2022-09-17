@@ -71,6 +71,7 @@ async function uploadAll (msg, match) {
   for (let i = start; i < start + 4; i++) {
     await addDownload(i)
   }
+  message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
 }
 
 async function cancelHandler (msg, match) {
