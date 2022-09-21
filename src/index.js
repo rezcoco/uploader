@@ -195,6 +195,7 @@ async function nextStep (gid, isPart = false) {
     dl.status = downloadStatus.STATUS_ARCHIVING
     await message.sendStatusMessage()
     fileName = isPart ? fn(fileName) : fileName
+    console.log(fileName)
     await archive(fileName, fullDirPath)
 
     dl.status = downloadStatus.STATUS_UPLOADING
