@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const mongoose = require('mongoose')
 const { Schema } = require('mongoose')
 const URI = process.env.URI
