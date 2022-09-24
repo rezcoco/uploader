@@ -20,7 +20,7 @@ const bot = new TelegramBot(TOKEN, { polling: true })
 const aria2 = new Aria2([options])
 const ariaTools = new AriaTools(aria2)
 const message = new Message(bot, aria2)
-const MAX_QUEUES = process.env.MAX_QUEUES || 4
+const MAX_QUEUES = parseInt(process.env.MAX_QUEUES) || 4
 const QUEUES = []
 
 if (IS_DB) main();
