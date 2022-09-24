@@ -68,7 +68,7 @@ async function uploadAll (msg, match) {
   const end = eRegex ? Number(eRegex[0].split(' ')[1]) : index.total
   index.last = end
 
-  for (let i = start; i < start + 4; i++) {
+  for (let i = start; i < start + MAX_QUEUES; i++) {
     await addDownload(i)
   }
   message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
