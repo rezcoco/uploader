@@ -113,7 +113,7 @@ async function cancelAllHandler (msg) {
     await ariaTools.cancelAll()
     interval.length = 0
     QUEUES.length = 0
-    for (key of Object.keys(download_list)) {
+    for (const key of Object.keys(download_list)) {
       delete download_list[key]
     }
     await message.deleteStatusMessage()
