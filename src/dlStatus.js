@@ -7,7 +7,8 @@ const downloadStatus = {
   STATUS_ARCHIVING: 'Archiving...🔐',
   STATUS_EXTRACTING: 'Extracting...📂',
   STATUS_RENAMING: 'Renamaing...✏️',
-  STATUS_CANCELLED: 'Cancelled...❌'
+  STATUS_CANCELLED: 'Cancelled...❌',
+  STATUS_WAITING: 'Waiting...⏳'
 }
 
 const PROGRESS_MAX_SIZE = Math.floor(100 / 8)
@@ -99,6 +100,7 @@ class AriaDownloadStatus {
     this.dir = path.join(__dirname, 'downloads', String(dir), '/')
     this.part = part
     this.status = status
+    this.index = dir
   }
 
   async getDownload (key) {

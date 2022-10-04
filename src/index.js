@@ -1,6 +1,7 @@
 require('dotenv').config()
 
 const { exec } = require('node:child_process')
+const EvenEmitter = require('node:events')
 const { main, Link } = require('./db')
 const { AriaTools } = require('./dl')
 const { directLink } = require('./directLink')
@@ -20,8 +21,11 @@ const bot = new TelegramBot(TOKEN, { polling: true })
 const aria2 = new Aria2([options])
 const ariaTools = new AriaTools(aria2)
 const message = new Message(bot, aria2)
-const MAX_QUEUES = parseInt(process.env.MAX_QUEUES) || 4
+const progress = new EvenEmitter()
+const MAX_DOWNLOAD_QUEUES = parseInt(process.env.MAX_DOWNLOAD_QUEUES) || 4
 const QUEUES = []
+const ARCHIVE_QUEUES = []
+const WAITING = []
 
 if (IS_DB) main();
 (async () => {
@@ -68,7 +72,7 @@ async function uploadAll (msg, match) {
   const end = eRegex ? Number(eRegex[0].split(' ')[1]) : index.total
   index.last = end
 
-  for (let i = start; i < start + MAX_QUEUES; i++) {
+  for (let i = start; i < start + MAX_DOWNLOAD_QUEUES; i++) {
     await addDownload(i)
   }
   message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
@@ -95,7 +99,7 @@ async function cancelHandler (msg, match) {
         setTimeout(() => bot.deleteMessage(chat_id, msg.message_id), 5000)
       })
 
-    if (index.current !== index.last && QUEUES.length < MAX_QUEUES) {
+    if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
       console.log(`Next ${index.current + 1}`)
       return addDownload(index.current + 1)
     }
@@ -165,60 +169,74 @@ function fn (fileName) {
   return str.join('.')
 }
 
-async function nextStep (gid, isPart = false) {
-  // delete interval
-  const intervalId = interval.findIndex(i => i === gid)
-  interval.splice(intervalId, 1)
-  const dl = download_list[gid]
-  dl.status = downloadStatus.STATUS_EXTRACTING
-  await message.sendStatusMessage()
-  let fileName = await dl.name()
-  const part = dl.part
-  const dir = dl.dir
-  const path = await dl.path()
-  const { parent } = part
-
-  const extPath = isPart ? parts[parent][0] : path
-  const exc = exec(`../extract.sh "${extPath}" ${dir}`, { cwd: __dirname })
-  console.log(`Extracting ${extPath}`)
-  await message.sendStatusMessage()
-  exc.stderr.on('data', (data) => {
-    console.error(data)
-  })
-  exc.on('close', async (code) => {
-    await clean(path)
-    console.log('Extracted: ', code)
-    dl.status = downloadStatus.STATUS_RENAMING
+async function nextStep (GID) {
+  if (ARCHIVE_QUEUES.length === 0 && WAITING.length > 0) {
+    const { gid, isPart } = WAITING.shift()
+    // delete interval
+    const intervalId = interval.findIndex(i => i === gid)
+    interval.splice(intervalId, 1)
+    const dl = download_list[gid]
+    dl.status = downloadStatus.STATUS_EXTRACTING
     await message.sendStatusMessage()
-    const fullDirPath = await bulkRenamer(dir, fileName)
+    let fileName = await dl.name()
+    const part = dl.part
+    const dir = dl.dir
+    const path = await dl.path()
+    const { parent } = part
 
-    dl.status = downloadStatus.STATUS_ARCHIVING
+    const extPath = isPart ? parts[parent][0] : path
+    ARCHIVE_QUEUES.push(gid)
+    const exc = exec(`../extract.sh "${extPath}" ${dir}`, { cwd: __dirname })
+    console.log(`Extracting ${extPath}`)
     await message.sendStatusMessage()
-    fileName = isPart ? fn(fileName) : fileName
-    await archive(fileName, fullDirPath)
+    exc.stderr.on('data', (data) => {
+      console.error(data)
+    })
+    exc.on('close', async (code) => {
+      await clean(path)
 
-    dl.status = downloadStatus.STATUS_UPLOADING
+      console.log('Extracted: ', code)
+      dl.status = downloadStatus.STATUS_RENAMING
+      await message.sendStatusMessage()
+      const fullDirPath = await bulkRenamer(dir, fileName)
+
+      dl.status = downloadStatus.STATUS_ARCHIVING
+      await message.sendStatusMessage()
+      fileName = isPart ? fn(fileName) : fileName
+      await archive(fileName, fullDirPath)
+
+      ARCHIVE_QUEUES.pop()
+      if (WAITING.length !== 0) progress.emit('extract', WAITING[0])
+
+      dl.status = downloadStatus.STATUS_UPLOADING
+      await message.sendStatusMessage()
+      const fullPath = dir + fileName
+      await upload(fileName, fullPath)
+      await message.sendStatusMessage()
+
+      index.count += 1
+      await message.updateUploadStatusMessage(`<b>Upload Complete: </b>${fileName}\n\nTotal Uploaded: ${index.count}`)
+
+      await clean(dir)
+      // remove from queue
+      delete download_list[gid]
+      const queuesId = QUEUES.findIndex(i => i === gid)
+      QUEUES.splice(queuesId, 1)
+      if (QUEUES.length === 0) return message.deleteStatusMessage()
+
+      if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
+        console.log(`Next ${index.current + 1}`)
+        return addDownload(index.current + 1)
+      }
+    })
+  } else {
+    const dl = download_list[GID]
+    dl.status = downloadStatus.STATUS_WAITING
     await message.sendStatusMessage()
-    const fullPath = dir + fileName
-    await upload(fileName, fullPath)
-    await message.sendStatusMessage()
-
-    index.count += 1
-    await message.updateUploadStatusMessage(`<b>Upload Complete: </b>${fileName}\n\nTotal Uploaded: ${index.count}`)
-
-    await clean(dir)
-    // remove from queue
-    delete download_list[gid]
-    const queuesId = QUEUES.findIndex(i => i === gid)
-    QUEUES.splice(queuesId, 1)
-    if (QUEUES.length === 0) return message.deleteStatusMessage()
-
-    if (index.current !== index.last && QUEUES.length < MAX_QUEUES) {
-      console.log(`Next ${index.current + 1}`)
-      return addDownload(index.current + 1)
-    }
-  })
+  }
 }
+
+progress.on('extract', nextStep)
 
 aria2.on('onDownloadComplete', async ([data]) => {
   const { gid } = data
@@ -233,10 +251,12 @@ aria2.on('onDownloadComplete', async ([data]) => {
       const isDone = parts[parent].every(e => e)
 
       if (isDone) {
-        await nextStep(gid, true)
+        WAITING.push({ gid, isPart: true })
+        progress.emit('extract', gid)
       }
     } else {
-      await nextStep(gid)
+      WAITING.push({ gid, isPart: false })
+      progress.emit('extract', gid)
     }
   } catch (e) {
     console.log(e)

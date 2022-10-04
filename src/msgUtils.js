@@ -1,4 +1,4 @@
-const { download_list, interval, index } = require('./utils')
+const { download_list, interval } = require('./utils')
 const { downloadStatus } = require('./dlStatus')
 
 function sleep (ms) {
@@ -23,6 +23,7 @@ class Message {
       const dl = download_list[id]
       const name = await dl.name()
       const status = await dl.status
+      const index = dl.index
       const progress = await dl.progress()
       const downloaded = await dl.downloaded()
       const total = await dl.total()
@@ -30,12 +31,11 @@ class Message {
       const time = await dl.time()
       const gid = dl.gid
       if (status === downloadStatus.STATUS_DOWNLOADING) {
-        msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n${progress}\n<b>Downloaded: </b>${downloaded} of ${total}\n<b>Speed: </b>${speed} | <b>ETA: </b>${time}\n<code>/cancel ${gid}</code>\n\n`
+        msg += `<b>Name: </b>${index}. ${name}\n<b>Status: </b>${status}\n${progress}\n<b>Downloaded: </b>${downloaded} of ${total}\n<b>Speed: </b>${speed} | <b>ETA: </b>${time}\n<code>/cancel ${gid}</code>\n\n`
       } else {
-        msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n\n`
+        msg += `<b>Name: </b>${index}. ${name}\n<b>Status: </b>${status}\n\n`
       }
     }
-    msg += `<b>Index: ${index.current}</b>\n`
     msg += `${minutes}:${seconds}:${milliseconds}`
     return msg
   }
@@ -85,8 +85,9 @@ class Message {
     const chat_id = this.botStatusMsg.chat.id
     this.botStatusMsg = await this.bot.editMessageText(msg, { chat_id, message_id, parse_mode: 'HTML' })
   }
+
   async deleteStatusMessage () {
-    const {  message_id } = this.botStatusMsg
+    const { message_id } = this.botStatusMsg
     const chat_id = this.botStatusMsg.chat.id
     await this.bot.deleteMessage(chat_id, message_id)
   }
