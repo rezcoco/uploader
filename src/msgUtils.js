@@ -1,5 +1,6 @@
+const os = require('os')
 const { download_list, interval } = require('./utils')
-const { downloadStatus } = require('./dlStatus')
+const { downloadStatus, formatSize } = require('./dlStatus')
 
 function sleep (ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -18,6 +19,9 @@ class Message {
     const minutes = t.getMinutes()
     const seconds = t.getSeconds()
     const milliseconds = t.getMilliseconds()
+    const freemem = formatSize(os.freemem())
+    const totalmem = formatSize(os.totalmem())
+
     let msg = ''
     for (const id in download_list) {
       const dl = download_list[id]
@@ -36,6 +40,7 @@ class Message {
         msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n<b>Index: ${index}</b>\n\n`
       }
     }
+    msg += `<b>RAM:</b> ${freemem} <b>OF</b> ${totalmem}\n`
     msg += `${minutes}:${seconds}:${milliseconds}`
     return msg
   }

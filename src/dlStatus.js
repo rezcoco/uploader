@@ -143,4 +143,4 @@ class AriaDownloadStatus {
   }
 }
 
-module.exports = { AriaDownloadStatus, downloadStatus }
+module.exports = { AriaDownloadStatus, downloadStatus, formatSize }

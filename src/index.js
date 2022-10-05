@@ -211,6 +211,7 @@ async function nextStep (GID) {
       dl.status = downloadStatus.STATUS_UPLOADING
       await message.sendStatusMessage()
       const fullPath = dir + fileName
+      console.log('Uploading: ', fileName)
       const fileId = await upload(fileName, fullPath)
       console.log(`File Name: ${fileName}, id: ${fileId}`)
       await message.sendStatusMessage()
