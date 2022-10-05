@@ -31,9 +31,9 @@ class Message {
       const time = await dl.time()
       const gid = dl.gid
       if (status === downloadStatus.STATUS_DOWNLOADING) {
-        msg += `<b>Name: </b>${index}. ${name}\n<b>Status: </b>${status}\n${progress}\n<b>Downloaded: </b>${downloaded} of ${total}\n<b>Speed: </b>${speed} | <b>ETA: </b>${time}\n<code>/cancel ${gid}</code>\n\n`
+        msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n<b>Index: ${index}</b>\n${progress}\n<b>Downloaded: </b>${downloaded} of ${total}\n<b>Speed: </b>${speed} | <b>ETA: </b>${time}\n<code>/cancel ${gid}</code>\n\n`
       } else {
-        msg += `<b>Name: </b>${index}. ${name}\n<b>Status: </b>${status}\n\n`
+        msg += `<b>Name: </b>${name}\n<b>Status: </b>${status}\n<b>Index: ${index}</b>\n\n`
       }
     }
     msg += `${minutes}:${seconds}:${milliseconds}`
