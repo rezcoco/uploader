@@ -24,7 +24,7 @@ function archive (fileName, filePath) {
       console.error(data)
     })
     exc.on('close', (code) => {
-      console.log('Archived: ', code)
+      console.log('FileName: ', fileName, 'Archived: ', code)
       resolve(fileName)
     })
   })
