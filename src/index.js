@@ -195,7 +195,7 @@ async function nextStep (GID) {
     exc.on('close', async (code) => {
       await clean(path)
 
-      console.log('File Name: ', fileName, 'Extracted: ', code)
+      console.log('Extracted: ', fileName, 'Code: ', code)
       dl.status = downloadStatus.STATUS_RENAMING
       await message.sendStatusMessage()
       const fullDirPath = await bulkRenamer(dir, fileName)
@@ -213,7 +213,7 @@ async function nextStep (GID) {
       const fullPath = dir + fileName
       console.log('Uploading: ', fileName)
       const fileId = await upload(fileName, fullPath)
-      console.log(`File Name: ${fileName}, id: ${fileId}`)
+      console.log(`Uploaded: ${fileName}, id: ${fileId}`)
       await message.sendStatusMessage()
 
       index.count += 1
