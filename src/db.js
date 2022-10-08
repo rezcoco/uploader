@@ -5,30 +5,30 @@ const { Schema } = require('mongoose')
 const URI = process.env.URI
 
 const connectionParams = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+    useNewUrlParser: true,
+    useUnifiedTopology: true
 }
 
 const main = async () => {
-  await mongoose.connect(URI, connectionParams)
-    .then(() => console.log('Connected to Mongodb'))
-    .catch((err) => console.log(err))
-  return mongoose
+    await mongoose.connect(URI, connectionParams)
+        .then(() => console.log('Connected to Mongodb'))
+        .catch((err) => console.log(err))
+    return mongoose
 }
 
 const LinkSchema = new Schema({
-  name: { type: String, unique: true },
-  link: Schema.Types.Mixed
+    name: { type: String, unique: true },
+    link: Schema.Types.Mixed
 })
 
 LinkSchema.statics.isDuplicate = async function (name) {
-  try {
-    const result = await this.findOne({ name })
-    if (result) return true
-    return false
-  } catch (err) {
-    console.log(err)
-  }
+    try {
+        const result = await this.findOne({ name })
+        if (result) return true
+        return false
+    } catch (err) {
+        console.log(err)
+    }
 }
 const Link = mongoose.model('link', LinkSchema)
 

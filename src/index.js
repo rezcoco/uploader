@@ -29,249 +29,249 @@ const WAITING = []
 
 if (IS_DB) main();
 (async () => {
-  try {
-    await exec('../aria.sh', { cwd: __dirname })
-    console.log('Aria2 running')
-    await sleep(1000)
-    await aria2.open()
-    console.log('Websocket opened')
-    index.total = (await Link.find()).length
-  } catch (e) {
-    console.log(e)
-  }
+    try {
+        await exec('../scripts/aria.sh', { cwd: __dirname })
+        console.log('Aria2 running')
+        await sleep(1000)
+        await aria2.open()
+        console.log('Websocket opened')
+        index.total = (await Link.find()).length
+    } catch (e) {
+        console.log(e)
+    }
 })()
 
 async function uploadCmdHandler (msg, match) {
-  const chatId = msg.chat.id
-  const resp = match[1]
+    const chatId = msg.chat.id
+    const resp = match[1]
 
-  message.sendMessage(chatId, '<i>Uploading...</i>')
+    message.sendMessage(chatId, '<i>Uploading...</i>')
 
-  const sRegex = resp.match(/start\s\d+/)
-  const eRegex = resp.match(/end\s\d+/)
-  const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
-  const end = eRegex ? Number(eRegex[0].split(' ')[1]) : 4
-  index.last = end
+    const sRegex = resp.match(/start\s\d+/)
+    const eRegex = resp.match(/end\s\d+/)
+    const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
+    const end = eRegex ? Number(eRegex[0].split(' ')[1]) : 4
+    index.last = end
 
-  for (let i = start; i <= end; i++) {
-    await addDownload(i)
-  }
+    for (let i = start; i <= end; i++) {
+        await addDownload(i)
+    }
 
-  message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
+    message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
 };
 
 async function uploadAll (msg, match) {
-  const chatId = msg.chat.id
-  const resp = match[1]
+    const chatId = msg.chat.id
+    const resp = match[1]
 
-  message.sendMessage(chatId, '<i>Uploading...</i>')
+    message.sendMessage(chatId, '<i>Uploading...</i>')
 
-  const sRegex = resp.match(/start\s\d+/)
-  const eRegex = resp.match(/end\s\d+/)
-  const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
-  const end = eRegex ? Number(eRegex[0].split(' ')[1]) : index.total
-  index.last = end
+    const sRegex = resp.match(/start\s\d+/)
+    const eRegex = resp.match(/end\s\d+/)
+    const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
+    const end = eRegex ? Number(eRegex[0].split(' ')[1]) : index.total
+    index.last = end
 
-  for (let i = start; i < start + MAX_DOWNLOAD_QUEUES; i++) {
-    await addDownload(i)
-  }
-  message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
+    for (let i = start; i < start + MAX_DOWNLOAD_QUEUES; i++) {
+        await addDownload(i)
+    }
+    message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
 }
 
 async function cancelHandler (msg, match) {
-  const chat_id = msg.chat.id
-  const gid = match[1]
+    const chat_id = msg.chat.id
+    const gid = match[1]
 
-  const clMsg = await bot.sendMessage(chat_id, `Canceling <i>${gid}...</i>`, { parse_mode: 'HTML' })
-  const { message_id } = clMsg
-  const cancel = await ariaTools.cancel(gid)
+    const clMsg = await bot.sendMessage(chat_id, `Canceling <i>${gid}...</i>`, { parse_mode: 'HTML' })
+    const { message_id } = clMsg
+    const cancel = await ariaTools.cancel(gid)
 
-  if (cancel === gid) {
-    const intervalId = interval.findIndex(i => i === gid)
-    const queuesId = QUEUES.findIndex(i => i === gid)
-    interval.splice(intervalId, 1)
-    QUEUES.splice(queuesId, 1)
-    delete download_list[gid]
+    if (cancel === gid) {
+        const intervalId = interval.findIndex(i => i === gid)
+        const queuesId = QUEUES.findIndex(i => i === gid)
+        interval.splice(intervalId, 1)
+        QUEUES.splice(queuesId, 1)
+        delete download_list[gid]
 
-    console.log('Deleted: ', cancel)
-    bot.editMessageText(`<i>${gid}</i> deleted`, { chat_id, message_id, parse_mode: 'HTML' })
-      .then((msg) => {
-        setTimeout(() => bot.deleteMessage(chat_id, msg.message_id), 5000)
-      })
+        console.log('Deleted: ', cancel)
+        bot.editMessageText(`<i>${gid}</i> deleted`, { chat_id, message_id, parse_mode: 'HTML' })
+            .then((msg) => {
+                setTimeout(() => bot.deleteMessage(chat_id, msg.message_id), 5000)
+            })
 
-    if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
-      console.log(`Next ${index.current + 1}`)
-      return addDownload(index.current + 1)
+        if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
+            console.log(`Next ${index.current + 1}`)
+            return addDownload(index.current + 1)
+        }
+        return
     }
-    return
-  }
-  bot.editMessageText(`Failed to delete <i>${gid}</i>`, { chat_id, message_id, parse_mode: 'HTML' })
-    .then((msg) => {
-      setTimeout(() => bot.deleteMessage(chat_id, msg.message_id), 5000)
-    })
+    bot.editMessageText(`Failed to delete <i>${gid}</i>`, { chat_id, message_id, parse_mode: 'HTML' })
+        .then((msg) => {
+            setTimeout(() => bot.deleteMessage(chat_id, msg.message_id), 5000)
+        })
 }
 
 async function cancelAllHandler (msg) {
-  const chat_id = msg.chat.id
-  if (QUEUES.length > 0) {
-    await ariaTools.cancelAll()
-    interval.length = 0
-    QUEUES.length = 0
-    for (const key of Object.keys(download_list)) {
-      delete download_list[key]
+    const chat_id = msg.chat.id
+    if (QUEUES.length > 0) {
+        await ariaTools.cancelAll()
+        interval.length = 0
+        QUEUES.length = 0
+        for (const key of Object.keys(download_list)) {
+            delete download_list[key]
+        }
+        await message.deleteStatusMessage()
+        await message.sendMessage(chat_id, 'All tasks canceled')
+        console.clear()
     }
-    await message.deleteStatusMessage()
-    await message.sendMessage(chat_id, 'All tasks canceled')
-    console.clear()
-  }
 }
 
 async function addDownload (start) {
-  index.current = start
-  console.log(`Index file downloaded: ${index.current}`)
-  const db = await Link.find()
-  const link = db[start].link
-  if (Array.isArray(link)) {
-    parts[start] = []
-    for (let i = 0; i < link.length; i++) {
-      const { hostname } = new URL(link[i])
-      if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
-        parts[start].push(false)
+    index.current = start
+    console.log(`Index file downloaded: ${index.current}`)
+    const db = await Link.find()
+    const link = db[start].link
+    if (Array.isArray(link)) {
+        parts[start] = []
+        for (let i = 0; i < link.length; i++) {
+            const { hostname } = new URL(link[i])
+            if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
+                parts[start].push(false)
 
-        const uri = await directLink(link[i])
-        const gid = await ariaTools.addDownload(uri, start)
-        download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, { parent: start, order: i })
+                const uri = await directLink(link[i])
+                const gid = await ariaTools.addDownload(uri, start)
+                download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, { parent: start, order: i })
 
-        QUEUES.push(gid)
-        interval.push(gid)
+                QUEUES.push(gid)
+                interval.push(gid)
 
-        await message.sendStatusMessage()
-      }
+                await message.sendStatusMessage()
+            }
+        }
+    } else {
+        const { hostname } = new URL(link)
+        if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
+            const uri = await directLink(link)
+            const gid = await ariaTools.addDownload(uri, start)
+            download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING)
+
+            QUEUES.push(gid)
+            interval.push(gid)
+
+            await message.sendStatusMessage()
+        }
     }
-  } else {
-    const { hostname } = new URL(link)
-    if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
-      const uri = await directLink(link)
-      const gid = await ariaTools.addDownload(uri, start)
-      download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING)
-
-      QUEUES.push(gid)
-      interval.push(gid)
-
-      await message.sendStatusMessage()
-    }
-  }
 }
 
 function fn (fileName) {
-  const str = fileName.split('.')
-  str.splice(1, 1)
-  return str.join('.')
+    const str = fileName.split('.')
+    str.splice(1, 1)
+    return str.join('.')
 }
 
 async function nextStep (GID) {
-  if (ARCHIVE_QUEUES.length === 0 && WAITING.length > 0) {
-    const { gid, isPart } = WAITING.shift()
-    // delete interval
-    const intervalId = interval.findIndex(i => i === gid)
-    interval.splice(intervalId, 1)
-    const dl = download_list[gid]
-    dl.status = downloadStatus.STATUS_EXTRACTING
-    await message.sendStatusMessage()
-    let fileName = await dl.name()
-    const part = dl.part
-    const dir = dl.dir
-    const path = await dl.path()
-    const { parent } = part
+    if (ARCHIVE_QUEUES.length === 0 && WAITING.length > 0) {
+        const { gid, isPart } = WAITING.shift()
+        // delete interval
+        const intervalId = interval.findIndex(i => i === gid)
+        interval.splice(intervalId, 1)
+        const dl = download_list[gid]
+        dl.status = downloadStatus.STATUS_EXTRACTING
+        await message.sendStatusMessage()
+        let fileName = await dl.name()
+        const part = dl.part
+        const dir = dl.dir
+        const path = await dl.path()
+        const { parent } = part
 
-    const extPath = isPart ? parts[parent][0] : path
-    ARCHIVE_QUEUES.push(gid)
-    const exc = exec(`../extract.sh "${extPath}" ${dir}`, { cwd: __dirname })
-    console.log(`Extracting ${extPath}`)
-    await message.sendStatusMessage()
-    exc.stderr.on('data', (data) => {
-      console.error(data)
-    })
-    exc.on('close', async (code) => {
-      await clean(path)
+        const extPath = isPart ? parts[parent][0] : path
+        ARCHIVE_QUEUES.push(gid)
+        const exc = exec(`../scripts/extract.sh "${extPath}" ${dir}`, { cwd: __dirname })
+        console.log(`Extracting ${extPath}`)
+        await message.sendStatusMessage()
+        exc.stderr.on('data', (data) => {
+            console.error(data)
+        })
+        exc.on('close', async (code) => {
+            await clean(path)
 
-      console.log('Extracted: ', fileName, 'Code: ', code)
-      dl.status = downloadStatus.STATUS_RENAMING
-      await message.sendStatusMessage()
-      const fullDirPath = await bulkRenamer(dir, fileName)
+            console.log('Extracted: ', fileName, 'Code: ', code)
+            dl.status = downloadStatus.STATUS_RENAMING
+            await message.sendStatusMessage()
+            const fullDirPath = await bulkRenamer(dir, fileName)
 
-      dl.status = downloadStatus.STATUS_ARCHIVING
-      await message.sendStatusMessage()
-      fileName = isPart ? fn(fileName) : fileName
-      await archive(fileName, fullDirPath)
+            dl.status = downloadStatus.STATUS_ARCHIVING
+            await message.sendStatusMessage()
+            fileName = isPart ? fn(fileName) : fileName
+            await archive(fileName, fullDirPath)
 
-      ARCHIVE_QUEUES.pop()
-      if (WAITING.length !== 0) progress.emit('extract', WAITING[0])
+            ARCHIVE_QUEUES.pop()
+            if (WAITING.length !== 0) progress.emit('extract', WAITING[0])
 
-      dl.status = downloadStatus.STATUS_UPLOADING
-      await message.sendStatusMessage()
-      const fullPath = dir + fileName
-      console.log('Uploading: ', fileName)
-      const fileId = await upload(fileName, fullPath)
-      console.log(`Uploaded: ${fileName}, id: ${fileId}`)
-      await message.sendStatusMessage()
+            dl.status = downloadStatus.STATUS_UPLOADING
+            await message.sendStatusMessage()
+            const fullPath = dir + fileName
+            console.log('Uploading: ', fileName)
+            const fileId = await upload(fileName, fullPath)
+            console.log(`Uploaded: ${fileName}, id: ${fileId}`)
+            await message.sendStatusMessage()
 
-      index.count += 1
-      await message.updateUploadStatusMessage(`<b>Upload Complete: </b>${fileName}\n\nTotal Uploaded: ${index.count}`)
+            index.count += 1
+            await message.updateUploadStatusMessage(`<b>Upload Complete: </b>${fileName}\n\nTotal Uploaded: ${index.count}`)
 
-      await clean(dir)
-      // remove from queue
-      delete download_list[gid]
-      const queuesId = QUEUES.findIndex(i => i === gid)
-      QUEUES.splice(queuesId, 1)
-      if (QUEUES.length === 0) return message.deleteStatusMessage()
+            await clean(dir)
+            // remove from queue
+            delete download_list[gid]
+            const queuesId = QUEUES.findIndex(i => i === gid)
+            QUEUES.splice(queuesId, 1)
+            if (QUEUES.length === 0) return message.deleteStatusMessage()
 
-      if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
-        console.log(`Next ${index.current + 1}`)
-        return addDownload(index.current + 1)
-      }
-    })
-  } else {
-    const dl = download_list[GID]
-    dl.status = downloadStatus.STATUS_WAITING
-    await message.sendStatusMessage()
-  }
+            if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
+                console.log(`Next ${index.current + 1}`)
+                return addDownload(index.current + 1)
+            }
+        })
+    } else {
+        const dl = download_list[GID]
+        dl.status = downloadStatus.STATUS_WAITING
+        await message.sendStatusMessage()
+    }
 }
 
 progress.on('extract', nextStep)
 
 aria2.on('onDownloadComplete', async ([data]) => {
-  const { gid } = data
-  const dl = download_list[gid]
-  const part = dl.part
-  const path = await dl.path()
+    const { gid } = data
+    const dl = download_list[gid]
+    const part = dl.part
+    const path = await dl.path()
 
-  try {
-    if (part) {
-      const { parent, order } = part
-      parts[parent][order] = path
-      const isDone = parts[parent].every(e => e)
+    try {
+        if (part) {
+            const { parent, order } = part
+            parts[parent][order] = path
+            const isDone = parts[parent].every(e => e)
 
-      if (isDone) {
-        WAITING.push({ gid, isPart: true })
-        progress.emit('extract', gid)
-      }
-    } else {
-      WAITING.push({ gid, isPart: false })
-      progress.emit('extract', gid)
+            if (isDone) {
+                WAITING.push({ gid, isPart: true })
+                progress.emit('extract', gid)
+            }
+        } else {
+            WAITING.push({ gid, isPart: false })
+            progress.emit('extract', gid)
+        }
+    } catch (e) {
+        console.log(e)
     }
-  } catch (e) {
-    console.log(e)
-  }
 })
 
 app.get('/', async (req, res) => {
-  res.send('Running smooth like butter!')
+    res.send('Running smooth like butter!')
 })
 app.listen(PORT, '0.0.0.0', () => console.log(`Listening on port ${PORT}`))
 
 process.on('exit', () => {
-  ariaTools.stop()
+    ariaTools.stop()
 })
 
 bot.onText(/\/upload (.+)/, uploadCmdHandler)

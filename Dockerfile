@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 RUN chmod 777 /usr/src/app
 COPY . ./
 RUN chmod +x *sh
-RUN ./install.sh
+RUN ./scripts/install.sh
 
 RUN apt-get -qq update && \
     apt-get -qq -y install aria2 locales
