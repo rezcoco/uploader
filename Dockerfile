@@ -3,7 +3,7 @@ FROM node:latest
 WORKDIR /usr/src/app
 RUN chmod 777 /usr/src/app
 COPY . ./
-RUN chmod +x *sh
+RUN chmod +x ./scripts/*
 RUN ./scripts/install.sh
 
 RUN apt-get -qq update && \
