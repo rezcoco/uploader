@@ -10,11 +10,13 @@ const { sleep, Message } = require('./msgUtils')
 const { download_list, interval, index, parts } = require('./utils')
 const { bulkRenamer, archive, clean } = require('./fsUtils')
 const { upload } = require('./drive/gdriveTools')
+const { alive } = require('./alive')
 const TelegramBot = require('node-telegram-bot-api')
 const Aria2 = require('aria2')
 const app = require('express')()
 const TOKEN = process.env.TOKEN || null
 const IS_DB = process.env.IS_DB || false
+const BASE_URL = process.env.BASE_URL
 const PORT = process.env.PORT || 2301
 const options = { host: 'localhost', port: 6800, secure: false, secret: '', path: '/jsonrpc' }
 const bot = new TelegramBot(TOKEN, { polling: true })
@@ -27,7 +29,9 @@ const QUEUES = []
 const ARCHIVE_QUEUES = []
 const WAITING = []
 
-if (IS_DB) main();
+if (IS_DB) main()
+if (BASE_URL) alive(BASE_URL);
+
 (async () => {
     try {
         await exec('../scripts/aria.sh', { cwd: __dirname })

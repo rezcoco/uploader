@@ -3,7 +3,9 @@ const time = 1000 * 60 * 10
 
 function alive (BASE_URL) {
     function ping () {
-        return axios.get(BASE_URL)
+        const date = new Date()
+        axios.get(BASE_URL)
+        return console.log(`Waked up on ${date}`)
     }
     setInterval(ping, time)
 }
