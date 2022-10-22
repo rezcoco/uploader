@@ -136,15 +136,15 @@ async function addDownload (start) {
     const db = await Link.find()
     const link = db[start].link
     if (Array.isArray(link)) {
-        parts[start] = []
+        parts[start] = {}
         for (let i = 0; i < link.length; i++) {
             const { hostname } = new URL(link[i])
             if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
-                parts[start].push(false)
-
                 const uri = await directLink(link[i])
                 const gid = await ariaTools.addDownload(uri, start)
-                download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, { parent: start, order: i })
+
+                parts[start][gid] = ''
+                download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, { parent: start })
 
                 QUEUES.push(gid)
                 interval.push(gid)
@@ -169,8 +169,18 @@ async function addDownload (start) {
 
 function fn (fileName) {
     const str = fileName.split('.')
-    str.splice(1, 1)
+    const index = str.length - 2
+
+    str.splice(index, 1)
     return str.join('.')
+}
+
+function partsUpdateMsg (index, status) {
+    for (const key of Object.keys(parts[index])) {
+        const dl = download_list[key]
+        dl.status = downloadStatus[status]
+        message.sendStatusMessage()
+    }
 }
 
 async function nextStep (GID) {
@@ -180,13 +190,18 @@ async function nextStep (GID) {
         const intervalId = interval.findIndex(i => i === gid)
         interval.splice(intervalId, 1)
         const dl = download_list[gid]
-        dl.status = downloadStatus.STATUS_EXTRACTING
-        await message.sendStatusMessage()
         let fileName = await dl.name()
         const part = dl.part
         const dir = dl.dir
         const path = await dl.path()
         const { parent } = part
+
+        if (isPart) {
+            partsUpdateMsg(parent, 'STATUS_EXTRACTING')
+        } else {
+            dl.status = downloadStatus.STATUS_EXTRACTING
+            await message.sendStatusMessage()
+        }
 
         const extPath = isPart ? parts[parent][0] : path
         ARCHIVE_QUEUES.push(gid)
@@ -200,20 +215,36 @@ async function nextStep (GID) {
             await clean(path)
 
             console.log('Extracted: ', fileName, 'Code: ', code)
-            dl.status = downloadStatus.STATUS_RENAMING
-            await message.sendStatusMessage()
+
+            if (isPart) {
+                partsUpdateMsg(parent, 'STATUS_RENAMING')
+            } else {
+                dl.status = downloadStatus.STATUS_RENAMING
+                await message.sendStatusMessage()
+            }
+
             const fullDirPath = await bulkRenamer(dir, fileName)
 
-            dl.status = downloadStatus.STATUS_ARCHIVING
-            await message.sendStatusMessage()
-            fileName = isPart ? fn(fileName) : fileName
+            if (isPart) {
+                partsUpdateMsg(parent, 'STATUS_ARCHIVING')
+            } else {
+                dl.status = downloadStatus.STATUS_ARCHIVING
+                await message.sendStatusMessage()
+            }
+
+            if (isPart) fileName = fn(fileName)
             await archive(fileName, fullDirPath)
 
             ARCHIVE_QUEUES.pop()
             if (WAITING.length !== 0) progress.emit('extract', WAITING[0])
 
-            dl.status = downloadStatus.STATUS_UPLOADING
-            await message.sendStatusMessage()
+            if (isPart) {
+                partsUpdateMsg(parent, 'STATUS_UPLOADING')
+            } else {
+                dl.status = downloadStatus.STATUS_UPLOADING
+                await message.sendStatusMessage()
+            }
+
             const fullPath = dir + fileName
             console.log('Uploading: ', fileName)
             const fileId = await upload(fileName, fullPath)
@@ -252,9 +283,9 @@ aria2.on('onDownloadComplete', async ([data]) => {
 
     try {
         if (part) {
-            const { parent, order } = part
-            parts[parent][order] = path
-            const isDone = parts[parent].every(e => e)
+            const { parent } = part
+            parts[parent][gid] = path
+            const isDone = Object.values(parts[parent]).every(isComplete => isComplete)
 
             if (isDone) {
                 WAITING.push({ gid, isPart: true })
