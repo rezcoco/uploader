@@ -191,19 +191,18 @@ async function nextStep (GID) {
         interval.splice(intervalId, 1)
         const dl = download_list[gid]
         let fileName = await dl.name()
-        const part = dl.part
         const dir = dl.dir
+        const index = dl.index
         const path = await dl.path()
-        const { parent } = part
 
         if (isPart) {
-            partsUpdateMsg(parent, 'STATUS_EXTRACTING')
+            partsUpdateMsg(index, 'STATUS_EXTRACTING')
         } else {
             dl.status = downloadStatus.STATUS_EXTRACTING
             await message.sendStatusMessage()
         }
 
-        const extPath = isPart ? parts[parent][0] : path
+        const extPath = isPart ? Object.values(parts[index])[0] : path
         ARCHIVE_QUEUES.push(gid)
         const exc = exec(`../scripts/extract.sh "${extPath}" ${dir}`, { cwd: __dirname })
         console.log(`Extracting ${extPath}`)
@@ -217,7 +216,7 @@ async function nextStep (GID) {
             console.log('Extracted: ', fileName, 'Code: ', code)
 
             if (isPart) {
-                partsUpdateMsg(parent, 'STATUS_RENAMING')
+                partsUpdateMsg(index, 'STATUS_RENAMING')
             } else {
                 dl.status = downloadStatus.STATUS_RENAMING
                 await message.sendStatusMessage()
@@ -226,7 +225,7 @@ async function nextStep (GID) {
             const fullDirPath = await bulkRenamer(dir, fileName)
 
             if (isPart) {
-                partsUpdateMsg(parent, 'STATUS_ARCHIVING')
+                partsUpdateMsg(index, 'STATUS_ARCHIVING')
             } else {
                 dl.status = downloadStatus.STATUS_ARCHIVING
                 await message.sendStatusMessage()
@@ -239,7 +238,7 @@ async function nextStep (GID) {
             if (WAITING.length !== 0) progress.emit('extract', WAITING[0])
 
             if (isPart) {
-                partsUpdateMsg(parent, 'STATUS_UPLOADING')
+                partsUpdateMsg(index, 'STATUS_UPLOADING')
             } else {
                 dl.status = downloadStatus.STATUS_UPLOADING
                 await message.sendStatusMessage()
