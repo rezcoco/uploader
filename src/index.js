@@ -144,7 +144,7 @@ async function addDownload (start) {
                 const gid = await ariaTools.addDownload(uri, start)
 
                 parts[start][gid] = ''
-                download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, { parent: start })
+                download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, true)
 
                 QUEUES.push(gid)
                 interval.push(gid)
@@ -279,12 +279,12 @@ aria2.on('onDownloadComplete', async ([data]) => {
     const { gid } = data
     const dl = download_list[gid]
     const part = dl.part
+    const index = dl.index
     const path = await dl.path()
 
     try {
         if (part) {
-            const { parent } = part
-            parts[parent][gid] = path
+            parts[index][gid] = path
             const isDone = Object.values(parts[parent]).every(isComplete => isComplete)
 
             if (isDone) {
