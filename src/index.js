@@ -192,17 +192,17 @@ async function nextStep (GID) {
         const dl = download_list[gid]
         let fileName = await dl.name()
         const dir = dl.dir
-        const index = dl.index
+        const parent = dl.index
         const path = await dl.path()
 
         if (isPart) {
-            partsUpdateMsg(index, 'STATUS_EXTRACTING')
+            partsUpdateMsg(parent, 'STATUS_EXTRACTING')
         } else {
             dl.status = downloadStatus.STATUS_EXTRACTING
             await message.sendStatusMessage()
         }
 
-        const extPath = isPart ? Object.values(parts[index])[0] : path
+        const extPath = isPart ? Object.values(parts[parent])[0] : path
         ARCHIVE_QUEUES.push(gid)
         const exc = exec(`../scripts/extract.sh "${extPath}" ${dir}`, { cwd: __dirname })
         console.log(`Extracting ${extPath}`)
@@ -216,7 +216,7 @@ async function nextStep (GID) {
             console.log('Extracted: ', fileName, 'Code: ', code)
 
             if (isPart) {
-                partsUpdateMsg(index, 'STATUS_RENAMING')
+                partsUpdateMsg(parent, 'STATUS_RENAMING')
             } else {
                 dl.status = downloadStatus.STATUS_RENAMING
                 await message.sendStatusMessage()
@@ -225,7 +225,7 @@ async function nextStep (GID) {
             const fullDirPath = await bulkRenamer(dir, fileName)
 
             if (isPart) {
-                partsUpdateMsg(index, 'STATUS_ARCHIVING')
+                partsUpdateMsg(parent, 'STATUS_ARCHIVING')
             } else {
                 dl.status = downloadStatus.STATUS_ARCHIVING
                 await message.sendStatusMessage()
@@ -238,7 +238,7 @@ async function nextStep (GID) {
             if (WAITING.length !== 0) progress.emit('extract', WAITING[0])
 
             if (isPart) {
-                partsUpdateMsg(index, 'STATUS_UPLOADING')
+                partsUpdateMsg(parent, 'STATUS_UPLOADING')
             } else {
                 dl.status = downloadStatus.STATUS_UPLOADING
                 await message.sendStatusMessage()
@@ -278,12 +278,12 @@ aria2.on('onDownloadComplete', async ([data]) => {
     const { gid } = data
     const dl = download_list[gid]
     const part = dl.part
-    const index = dl.index
+    const parent = dl.index
     const path = await dl.path()
 
     try {
         if (part) {
-            parts[index][gid] = path
+            parts[parent][gid] = path
             const isDone = Object.values(parts[parent]).every(isComplete => isComplete)
 
             if (isDone) {
