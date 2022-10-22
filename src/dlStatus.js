@@ -100,6 +100,7 @@ class AriaDownloadStatus {
         this.dir = path.join(__dirname, 'downloads', String(dir), '/')
         this.part = part
         this.status = status
+        this.index = dir
     }
 
     async getDownload (key) {
