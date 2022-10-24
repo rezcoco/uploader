@@ -6,11 +6,18 @@ async function rd (path) {
     return readdir(path, { withFileTypes: true })
 }
 
+function imgName (fileName) {
+    const s = fileName.split('-')
+    s.splice(0, s.length - 1)
+
+    return s.join('')
+}
+
 function rn (files, fullDirPath) {
     files.forEach(async (file) => {
         const fileName = file.name
         if (file.isFile()) {
-            const fName = fileName.match(/(?=MrCong.com).+/i)[0].split('-')[1]
+            const fName = imgName(fileName)
             return rename(path.join(fullDirPath, fileName), path.join(fullDirPath, fName))
         } else {
             const folderPath = path.join(fullDirPath, fileName)

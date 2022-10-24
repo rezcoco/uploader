@@ -10,6 +10,7 @@ const { sleep, Message } = require('./msgUtils')
 const { download_list, interval, index, parts } = require('./utils')
 const { bulkRenamer, archive, clean } = require('./fsUtils')
 const { upload } = require('./drive/gdriveTools')
+const { search } = require('./drive/search')
 const { alive } = require('./alive')
 const TelegramBot = require('node-telegram-bot-api')
 const Aria2 = require('aria2')
@@ -130,49 +131,56 @@ async function cancelAllHandler (msg) {
     }
 }
 
+function realFileName (fileName) {
+    const r = fileName.split('(')
+    r.splice(r.length-1, 1)
+
+    return r.join('(').trim()
+}
+
 async function addDownload (start) {
     index.current = start
     console.log(`Index file downloaded: ${index.current}`)
     const db = await Link.find()
     const link = db[start].link
-    if (Array.isArray(link)) {
-        parts[start] = {}
-        for (let i = 0; i < link.length; i++) {
-            const { hostname } = new URL(link[i])
+    const fileName = realFileName(db[start].name)
+    
+    const isDuplicate = await search(fileName)
+
+    if (!isDuplicate) {
+        if (Array.isArray(link)) {
+            parts[start] = {}
+            for (let i = 0; i < link.length; i++) {
+                const { hostname } = new URL(link[i])
+                if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
+                    const uri = await directLink(link[i])
+                    const gid = await ariaTools.addDownload(uri, start)
+    
+                    parts[start][gid] = ''
+                    download_list[gid] = new AriaDownloadStatus(aria2, gid, fileName, start, downloadStatus.STATUS_DOWNLOADING, true)
+    
+                    QUEUES.push(gid)
+                    interval.push(gid)
+    
+                    await message.sendStatusMessage()
+                }
+            }
+        } else {
+            const { hostname } = new URL(link)
             if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
-                const uri = await directLink(link[i])
+                const uri = await directLink(link)
                 const gid = await ariaTools.addDownload(uri, start)
-
-                parts[start][gid] = ''
-                download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, true)
-
+                download_list[gid] = new AriaDownloadStatus(aria2, gid, fileName, start, downloadStatus.STATUS_DOWNLOADING)
+    
                 QUEUES.push(gid)
                 interval.push(gid)
-
+    
                 await message.sendStatusMessage()
             }
         }
     } else {
-        const { hostname } = new URL(link)
-        if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
-            const uri = await directLink(link)
-            const gid = await ariaTools.addDownload(uri, start)
-            download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING)
-
-            QUEUES.push(gid)
-            interval.push(gid)
-
-            await message.sendStatusMessage()
-        }
+        console.log(`${fileName} is already there !`)
     }
-}
-
-function fn (fileName) {
-    const str = fileName.split('.')
-    const index = str.length - 2
-
-    str.splice(index, 1)
-    return str.join('.')
 }
 
 function partsUpdateMsg (index, status) {
@@ -190,7 +198,8 @@ async function nextStep (GID) {
         const intervalId = interval.findIndex(i => i === gid)
         interval.splice(intervalId, 1)
         const dl = download_list[gid]
-        let fileName = await dl.name()
+        const name = await dl.name()
+        const fileName = dl.fileName
         const dir = dl.dir
         const parent = dl.index
         const path = await dl.path()
@@ -213,7 +222,7 @@ async function nextStep (GID) {
         exc.on('close', async (code) => {
             await clean(path)
 
-            console.log('Extracted: ', fileName, 'Code: ', code)
+            console.log('Extracted: ', name, 'Code: ', code)
 
             if (isPart) {
                 partsUpdateMsg(parent, 'STATUS_RENAMING')
@@ -222,7 +231,7 @@ async function nextStep (GID) {
                 await message.sendStatusMessage()
             }
 
-            const fullDirPath = await bulkRenamer(dir, fileName)
+            const fullDirPath = await bulkRenamer(dir, name)
 
             if (isPart) {
                 partsUpdateMsg(parent, 'STATUS_ARCHIVING')
@@ -231,7 +240,6 @@ async function nextStep (GID) {
                 await message.sendStatusMessage()
             }
 
-            if (isPart) fileName = fn(fileName)
             await archive(fileName, fullDirPath)
 
             ARCHIVE_QUEUES.pop()
@@ -244,7 +252,7 @@ async function nextStep (GID) {
                 await message.sendStatusMessage()
             }
 
-            const fullPath = dir + fileName
+            const fullPath = dir + name
             console.log('Uploading: ', fileName)
             const fileId = await upload(fileName, fullPath)
             console.log(`Uploaded: ${fileName}, id: ${fileId}`)
