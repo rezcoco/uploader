@@ -25,7 +25,7 @@ const aria2 = new Aria2([options])
 const ariaTools = new AriaTools(aria2)
 const message = new Message(bot, aria2)
 const progress = new EvenEmitter()
-const MAX_DOWNLOAD_QUEUES = parseInt(process.env.MAX_DOWNLOAD_QUEUES) || 4
+const MAX_DOWNLOAD_TASKS = parseInt(process.env.MAX_DOWNLOAD_TASKS) || 4
 const QUEUES = []
 const ARCHIVE_QUEUES = []
 const WAITING = []
@@ -77,7 +77,7 @@ async function uploadAll (msg, match) {
     const end = eRegex ? Number(eRegex[0].split(' ')[1]) : index.total
     index.last = end
 
-    for (let i = start; i < start + MAX_DOWNLOAD_QUEUES; i++) {
+    for (let i = start; i < start + MAX_DOWNLOAD_TASKS; i++) {
         await addDownload(i)
     }
     message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
@@ -104,7 +104,7 @@ async function cancelHandler (msg, match) {
                 setTimeout(() => bot.deleteMessage(chat_id, msg.message_id), 5000)
             })
 
-        if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
+        if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_TASKS) {
             console.log(`Next ${index.current + 1}`)
             return addDownload(index.current + 1)
         }
@@ -131,13 +131,6 @@ async function cancelAllHandler (msg) {
     }
 }
 
-function realFileName (fileName) {
-    const r = fileName.split('(')
-    r.splice(r.length-1, 1)
-
-    return r.join('(').trim()
-}
-
 async function addDownload (start) {
     index.current = start
     console.log(`Index file downloaded: ${index.current}`)
@@ -150,20 +143,21 @@ async function addDownload (start) {
             const { hostname } = new URL(link[i])
             if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
                 const { url, fileName } = await directLink(link[i], hostname)
-                const isDuplicate = await search(fileName)
+                const rFileName = fn(fileName)
+                const isDuplicate = await search(rFileName)
 
                 if (!isDuplicate) {
                     const gid = await ariaTools.addDownload(url, start)
 
                     parts[start][gid] = ''
-                    download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, true)
+                    download_list[gid] = new AriaDownloadStatus(aria2, gid, rFileName, start, downloadStatus.STATUS_DOWNLOADING, true)
 
                     QUEUES.push(gid)
                     interval.push(gid)
 
                     await message.sendStatusMessage()
-                } else if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
-                    console.log(`${fileName} already there, Next to ${index.current + 1}`)
+                } else if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_TASKS) {
+                    console.log(`${rFileName} already there, Next to ${index.current + 1}`)
                     return addDownload(index.current + 1)
                 }
             } else {
@@ -178,13 +172,13 @@ async function addDownload (start) {
 
             if (!isDuplicate) {
                 const gid = await ariaTools.addDownload(url, start)
-                download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING)
+                download_list[gid] = new AriaDownloadStatus(aria2, gid, fileName, start, downloadStatus.STATUS_DOWNLOADING)
 
                 QUEUES.push(gid)
                 interval.push(gid)
 
                 await message.sendStatusMessage()
-            } else if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
+            } else if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_TASKS) {
                 console.log(`${fileName} already there, Next to ${index.current + 1}`)
                 return addDownload(index.current + 1)
             } else {
@@ -194,10 +188,24 @@ async function addDownload (start) {
     }
 }   
 
+function fn (fileName) {
+    const str = fileName.split('.')
+    const index = str.length - 2
+
+    str.splice(index, 1)
+    return str.join('.')
+}
+
 function partsUpdateMsg (index, status) {
     for (const key of Object.keys(parts[index])) {
         const dl = download_list[key]
         dl.status = downloadStatus[status]
+        message.sendStatusMessage()
+    }
+}
+function partsDeleteMsg (index) {
+    for (const key of Object.keys(parts[index])) {
+        delete download_list[key]
         message.sendStatusMessage()
     }
 }
@@ -210,6 +218,7 @@ async function nextStep (GID) {
         interval.splice(intervalId, 1)
         const dl = download_list[gid]
         const fileName = await dl.name()
+        const fName = dl.fileName
         const dir = dl.dir
         const parent = dl.index
         const path = await dl.path()
@@ -250,7 +259,7 @@ async function nextStep (GID) {
                 await message.sendStatusMessage()
             }
 
-            await archive(fileName, fullDirPath)
+            await archive(fName, fullDirPath)
 
             ARCHIVE_QUEUES.pop()
             if (WAITING.length !== 0) progress.emit('extract', WAITING[0])
@@ -262,23 +271,27 @@ async function nextStep (GID) {
                 await message.sendStatusMessage()
             }
 
-            const fullPath = dir + fileName
-            console.log('Uploading: ', fileName)
-            const fileId = await upload(fileName, fullPath)
-            console.log(`Uploaded: ${fileName}, id: ${fileId}`)
+            const fullPath = dir + fName
+            console.log('Uploading: ', fName)
+            const fileId = await upload(fName, fullPath)
+            console.log(`Uploaded: ${fName}, id: ${fileId}`)
             await message.sendStatusMessage()
 
             index.count += 1
-            await message.updateUploadStatusMessage(`<b>Upload Complete: </b>${fileName}\n\nTotal Uploaded: ${index.count}`)
+            await message.updateUploadStatusMessage(`<b>Upload Complete: </b>${fName}\n\nTotal Uploaded: ${index.count}`)
 
             await clean(dir)
             // remove from queue
-            delete download_list[gid]
+            if (isPart) {
+                partsDeleteMsg(parent)
+            } else {
+                delete download_list[gid]
+            }
             const queuesId = QUEUES.findIndex(i => i === gid)
             QUEUES.splice(queuesId, 1)
             if (QUEUES.length === 0) return message.deleteStatusMessage()
 
-            if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
+            if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_TASKS) {
                 console.log(`Next ${index.current + 1}`)
                 return addDownload(index.current + 1)
             }
