@@ -143,45 +143,56 @@ async function addDownload (start) {
     console.log(`Index file downloaded: ${index.current}`)
     const db = await Link.find()
     const link = db[start].link
-    const fileName = realFileName(db[start].name)
-    
-    const isDuplicate = await search(fileName)
 
-    if (!isDuplicate) {
-        if (Array.isArray(link)) {
-            parts[start] = {}
-            for (let i = 0; i < link.length; i++) {
-                const { hostname } = new URL(link[i])
-                if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
-                    const uri = await directLink(link[i])
-                    const gid = await ariaTools.addDownload(uri, start)
-    
+    if (Array.isArray(link)) {
+        parts[start] = {}
+        for (let i = 0; i < link.length; i++) {
+            const { hostname } = new URL(link[i])
+            if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
+                const { url, fileName } = await directLink(link[i], hostname)
+                const isDuplicate = await search(fileName)
+
+                if (!isDuplicate) {
+                    const gid = await ariaTools.addDownload(url, start)
+
                     parts[start][gid] = ''
-                    download_list[gid] = new AriaDownloadStatus(aria2, gid, fileName, start, downloadStatus.STATUS_DOWNLOADING, true)
-    
+                    download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING, true)
+
                     QUEUES.push(gid)
                     interval.push(gid)
-    
+
                     await message.sendStatusMessage()
+                } else if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
+                    console.log(`${fileName} already there, Next to ${index.current + 1}`)
+                    return addDownload(index.current + 1)
                 }
-            }
-        } else {
-            const { hostname } = new URL(link)
-            if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
-                const uri = await directLink(link)
-                const gid = await ariaTools.addDownload(uri, start)
-                download_list[gid] = new AriaDownloadStatus(aria2, gid, fileName, start, downloadStatus.STATUS_DOWNLOADING)
-    
-                QUEUES.push(gid)
-                interval.push(gid)
-    
-                await message.sendStatusMessage()
+            } else {
+                console.log('Nothing to upload')
             }
         }
     } else {
-        console.log(`${fileName} is already there !`)
+        const { hostname } = new URL(link)
+        if (hostname === 'www.mediafire.com' || hostname === 'anonfiles.com') {
+            const { url, fileName } = await directLink(link, hostname)
+            const isDuplicate = await search(fileName)
+
+            if (!isDuplicate) {
+                const gid = await ariaTools.addDownload(url, start)
+                download_list[gid] = new AriaDownloadStatus(aria2, gid, start, downloadStatus.STATUS_DOWNLOADING)
+
+                QUEUES.push(gid)
+                interval.push(gid)
+
+                await message.sendStatusMessage()
+            } else if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_QUEUES) {
+                console.log(`${fileName} already there, Next to ${index.current + 1}`)
+                return addDownload(index.current + 1)
+            } else {
+                console.log('Nothing to upload')
+            }
+        }
     }
-}
+}   
 
 function partsUpdateMsg (index, status) {
     for (const key of Object.keys(parts[index])) {
@@ -198,8 +209,7 @@ async function nextStep (GID) {
         const intervalId = interval.findIndex(i => i === gid)
         interval.splice(intervalId, 1)
         const dl = download_list[gid]
-        const name = await dl.name()
-        const fileName = dl.fileName
+        const fileName = await dl.name()
         const dir = dl.dir
         const parent = dl.index
         const path = await dl.path()
@@ -222,7 +232,7 @@ async function nextStep (GID) {
         exc.on('close', async (code) => {
             await clean(path)
 
-            console.log('Extracted: ', name, 'Code: ', code)
+            console.log('Extracted: ', fileName, 'Code: ', code)
 
             if (isPart) {
                 partsUpdateMsg(parent, 'STATUS_RENAMING')
@@ -231,7 +241,7 @@ async function nextStep (GID) {
                 await message.sendStatusMessage()
             }
 
-            const fullDirPath = await bulkRenamer(dir, name)
+            const fullDirPath = await bulkRenamer(dir, fileName)
 
             if (isPart) {
                 partsUpdateMsg(parent, 'STATUS_ARCHIVING')
@@ -252,7 +262,7 @@ async function nextStep (GID) {
                 await message.sendStatusMessage()
             }
 
-            const fullPath = dir + name
+            const fullPath = dir + fileName
             console.log('Uploading: ', fileName)
             const fileId = await upload(fileName, fullPath)
             console.log(`Uploaded: ${fileName}, id: ${fileId}`)

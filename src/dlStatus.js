@@ -94,10 +94,9 @@ function getFileName (filePath) {
 }
 
 class AriaDownloadStatus {
-    constructor (aria2, gid, fileName, dir, status, part = false) {
+    constructor (aria2, gid, dir, status, part = false) {
         this.aria2 = aria2
         this.gid = gid
-        this.fileName = fileName
         this.dir = path.join(__dirname, 'downloads', String(dir), '/')
         this.part = part
         this.status = status
