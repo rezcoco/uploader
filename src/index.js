@@ -60,7 +60,7 @@ async function uploadCmdHandler (msg, match) {
     index.current = start
     index.last = end
 
-    while (index.current <= end) {
+    while (index.current <= end && QUEUES.length < MAX_DOWNLOAD_TASKS) {
         await addDownload(index.current)
         index.current++
     }
@@ -82,7 +82,7 @@ async function uploadAll (msg, match) {
     index.current = start
     index.last = end
 
-    while (index.current <= start + MAX_DOWNLOAD_TASKS) {
+    while (QUEUES.length < MAX_DOWNLOAD_TASKS) {
         await addDownload(index.current)
         index.current++
     }
@@ -140,7 +140,7 @@ async function cancelAllHandler (msg) {
 
 async function addDownload (start) {
     index.current = start
-    console.log(`Index file downloaded: ${index.current}`)
+    console.log(`Index file download: ${index.current}`)
     const db = await Link.find()
     const link = db[start].link
 
