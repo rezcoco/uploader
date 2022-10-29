@@ -16,7 +16,7 @@ async function search (fileName) {
     })
     const files = res.data.files
     if (files.length === 0) {
-        console.log('No files found.')
+        console.log(`Processing ${fileName}`)
         return false
     }
     return true

@@ -54,10 +54,11 @@ async function uploadCmdHandler (msg, match) {
 
     const sRegex = resp.match(/start\s\d+/)
     const eRegex = resp.match(/end\s\d+/)
-    index.current = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
-    index.last = eRegex ? Number(eRegex[0].split(' ')[1]) : 4
+    const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
+    const end = eRegex ? Number(eRegex[0].split(' ')[1]) : 4
+    index.last = end
 
-    for (let i = index.current; i <= index.last; i++) {
+    for (let i = start; i <= end; i++) {
         await addDownload(i)
     }
 
@@ -72,12 +73,14 @@ async function uploadAll (msg, match) {
 
     const sRegex = resp.match(/start\s\d+/)
     const eRegex = resp.match(/end\s\d+/)
-    index.current = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
-    index.last = eRegex ? Number(eRegex[0].split(' ')[1]) : index.total
+    const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
+    const end = eRegex ? Number(eRegex[0].split(' ')[1]) : index.total
+    index.last = end
 
-    for (let i = index.current; i < index.current + MAX_DOWNLOAD_TASKS; i++) {
+    for (let i = start; i < start + MAX_DOWNLOAD_QUEUES; i++) {
         await addDownload(i)
     }
+
     message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
 }
 
