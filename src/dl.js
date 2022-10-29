@@ -43,7 +43,7 @@ class AriaTools {
     async addDownload (url, dir) {
         try {
             const uri = await url
-            return this.aria2.call('addUri', [uri], { dir: path.join(__dirname, 'downloads', String(dir)), 'content-disposition-default-utf8': 'true', '-auto-file-renaming': 'false' })
+            return this.aria2.call('addUri', [uri], { dir: path.join(__dirname, 'downloads', String(dir)), 'content-disposition-default-utf8': 'true', 'auto-file-renaming': 'false' })
         } catch (e) {
             console.log(e)
         }
