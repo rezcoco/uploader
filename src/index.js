@@ -56,10 +56,13 @@ async function uploadCmdHandler (msg, match) {
     const eRegex = resp.match(/end\s\d+/)
     const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
     const end = eRegex ? Number(eRegex[0].split(' ')[1]) : 4
+
+    index.current = start
     index.last = end
 
-    for (let i = start; i <= end; i++) {
-        await addDownload(i)
+    while (index.current <= end) {
+        await addDownload(index.current)
+        index.current++
     }
 
     message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
@@ -75,10 +78,13 @@ async function uploadAll (msg, match) {
     const eRegex = resp.match(/end\s\d+/)
     const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
     const end = eRegex ? Number(eRegex[0].split(' ')[1]) : index.total
+
+    index.current = start
     index.last = end
 
-    for (let i = start; i < start + MAX_DOWNLOAD_TASKS; i++) {
-        await addDownload(i)
+    while (index.current <= start + MAX_DOWNLOAD_TASKS) {
+        await addDownload(index.current)
+        index.current++
     }
 
     message.sendUploadMessage(chatId, '<b>Upload Complete: \n</b>')
@@ -157,9 +163,10 @@ async function addDownload (start) {
                     interval.push(gid)
 
                     await message.sendStatusMessage()
+                    return gid
                 } else if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_TASKS) {
                     console.log(`${rFileName} already there, Next to ${index.current + 1}`)
-                    return addDownload(index.current + 1)
+                    return addDownload(++index.current)
                 }
             } else {
                 console.log('Nothing to upload')
@@ -179,9 +186,10 @@ async function addDownload (start) {
                 interval.push(gid)
 
                 await message.sendStatusMessage()
+                return gid
             } else if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_TASKS) {
                 console.log(`${fileName} already there, Next to ${index.current + 1}`)
-                return addDownload(index.current + 1)
+                return addDownload(++index.current)
             } else {
                 console.log('Nothing to upload')
             }
