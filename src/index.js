@@ -77,7 +77,7 @@ async function uploadAll (msg, match) {
     const end = eRegex ? Number(eRegex[0].split(' ')[1]) : index.total
     index.last = end
 
-    for (let i = start; i < start + MAX_DOWNLOAD_QUEUES; i++) {
+    for (let i = start; i < start + MAX_DOWNLOAD_TASKS; i++) {
         await addDownload(i)
     }
 
