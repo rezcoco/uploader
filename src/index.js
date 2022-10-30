@@ -55,12 +55,12 @@ async function uploadCmdHandler (msg, match) {
     const sRegex = resp.match(/start\s\d+/)
     const eRegex = resp.match(/end\s\d+/)
     const start = sRegex ? Number(sRegex[0].split(' ')[1]) : 0
-    const end = eRegex ? Number(eRegex[0].split(' ')[1]) : 4
+    const end = eRegex ? Number(eRegex[0].split(' ')[1]) : MAX_DOWNLOAD_TASKS
 
     index.current = start
     index.last = end
 
-    while (index.current <= end && QUEUES.length < MAX_DOWNLOAD_TASKS) {
+    while (index.current < start + end) {
         await addDownload(index.current)
         index.current++
     }
@@ -340,6 +340,8 @@ aria2.on('onDownloadComplete', async ([data]) => {
 })
 
 app.get('/', async (req, res) => {
+    const db = await Link.find()
+    console.log(db[27])
     res.send('Running smooth like butter!')
 })
 app.listen(PORT, '0.0.0.0', () => console.log(`Listening on port ${PORT}`))

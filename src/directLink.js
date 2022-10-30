@@ -10,7 +10,7 @@ async function mediafire (uri) {
     const { data } = await axios.get(uri, { httpsAgent: agent })
     const $ = cheerio.load(data)
     const url = $('#downloadButton').attr('href')
-    const fileName = $('div.dl-info > div.intro.icon.rar.archive.application_x-rar > div.filename').text()
+    const fileName = $('.dl-btn-label').attr('title')
     return { url, fileName }
 }
 async function anonfiles (uri) {
