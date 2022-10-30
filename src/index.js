@@ -60,7 +60,7 @@ async function uploadCmdHandler (msg, match) {
     index.current = start
     index.last = end
 
-    while (index.current < start + end) {
+    while (index.current <= end) {
         await addDownload(index.current)
         index.current++
     }
@@ -163,7 +163,6 @@ async function addDownload (start) {
                     interval.push(gid)
 
                     await message.sendStatusMessage()
-                    return gid
                 } else if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_TASKS) {
                     console.log(`${rFileName} already there, Next to ${index.current + 1}`)
                     return addDownload(++index.current)
@@ -186,7 +185,6 @@ async function addDownload (start) {
                 interval.push(gid)
 
                 await message.sendStatusMessage()
-                return gid
             } else if (index.current !== index.last && QUEUES.length < MAX_DOWNLOAD_TASKS) {
                 console.log(`${fileName} already there, Next to ${index.current + 1}`)
                 return addDownload(++index.current)
@@ -340,8 +338,6 @@ aria2.on('onDownloadComplete', async ([data]) => {
 })
 
 app.get('/', async (req, res) => {
-    const db = await Link.find()
-    console.log(db[27])
     res.send('Running smooth like butter!')
 })
 app.listen(PORT, '0.0.0.0', () => console.log(`Listening on port ${PORT}`))
